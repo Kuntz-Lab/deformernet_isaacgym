@@ -1,0 +1,14 @@
+
+sensor_msgs/PointCloud2 pcl_input
+sensor_msgs/Image rgb_img
+sensor_msgs/Image depth_img
+---
+sensor_msgs/PointCloud2 pcl_filtered
+sensor_msgs/PointCloud2 pcl_normals
+sensor_msgs/Image cv_normals
+sensor_msgs/Image rgb_filtered
+sensor_msgs/Image depth_filtered
+float64 a
+float64 b
+float64 c
+float64 d

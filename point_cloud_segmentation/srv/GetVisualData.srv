@@ -1,0 +1,7 @@
+---
+sensor_msgs/PointCloud2 scene_cloud
+sensor_msgs/PointCloud2 scene_sd_cloud
+sensor_msgs/Image scene_depth_img
+sensor_msgs/Image scene_rgb_img
+sensor_msgs/Image scene_sd_depth_img
+sensor_msgs/Image scene_sd_rgb_img

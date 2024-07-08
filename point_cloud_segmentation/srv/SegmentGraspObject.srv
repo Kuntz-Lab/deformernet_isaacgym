@@ -1,0 +1,5 @@
+#sensor_msgs/PointCloud2 client_scene_cloud
+string client_cloud_path
+---
+GraspObject obj
+bool object_found

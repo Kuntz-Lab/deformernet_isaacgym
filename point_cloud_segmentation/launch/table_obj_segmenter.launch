@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="real_camera" default="false" />
+
+  <node pkg="point_cloud_segmentation" name="Filter" type="tabletop_object_segmenter"
+  	output="screen" cwd="node">
+    <param name ="real_camera" type = "bool" value= "$(arg real_camera)"/>
+    <param name ="pointcloud_from_client" type = "bool" value= "false"/>
+    <param name="camera_frame_id" value="camera_base" 
+        type="string" if="$(arg real_camera)"/>
+    <!-- <param name="camera_frame_id" value="kinect_pointcloud" 
+        type="string" unless="$(arg real_camera)"/> -->
+	<param name="camera_frame_id" value="world" 
+			type="string" unless="$(arg real_camera)"/>
+
+
+    <remap from="point_cloud_topic" to="/points2" if="$(arg real_camera)"/>
+    <remap from="sd_point_cloud_topic" to="/points2" if="$(arg real_camera)"/>
+    <remap from="sd_rgb_img_topic" to="/rgb/image_raw" if="$(arg real_camera)"/>
+    <remap from="rgb_img_topic" to="/rgb/image_raw" if="$(arg real_camera)"/>
+    <remap from="depth_img_topic" to="/depth/image_raw" if="$(arg real_camera)"/>
+    <remap from="sd_depth_img_topic" to="/depth/image_raw" if="$(arg real_camera)"/>
+
+    <remap from="point_cloud_topic" to="/camera/depth/points" unless="$(arg real_camera)"/>
+    <remap from="depth_img_topic" to="/camera/depth/image_raw" unless="$(arg real_camera)"/>
+    <remap from="rgb_img_topic" to="/camera/rgb/image_raw" unless="$(arg real_camera)"/>
+    <!--Dummy sd topics for simulation camera. -->
+    <remap from="sd_point_cloud_topic" to="/camera/depth/points" unless="$(arg real_camera)"/>
+    <remap from="sd_depth_img_topic" to="/camera/depth/image_raw" unless="$(arg real_camera)"/>
+    <remap from="sd_rgb_img_topic" to="/camera/rgb/image_raw" unless="$(arg real_camera)"/>
+
+	<param name ="RANSAC_Distance_Threshold" type="double" value= "0.015" />
+
+	<param name ="max_x" type = "double" value= "0.5" if="$(arg real_camera)"/>
+	<param name ="min_x" type = "double" value= "-0.5" if="$(arg real_camera)"/>
+	<param name ="max_y" type = "double" value= "-0.4" if="$(arg real_camera)"/>
+	<param name ="min_y" type = "double" value= "-1.05" if="$(arg real_camera)"/>
+	<param name ="max_z" type = "double" value= "1." if="$(arg real_camera)"/>
+	<param name ="min_z" type = "double" value= "0.5" if="$(arg real_camera)"/>
+
+	<param name ="max_x" type = "double" value= "500" unless="$(arg real_camera)"/>
+	<param name ="min_x" type = "double" value= "-500" unless="$(arg real_camera)"/>
+	<param name ="max_y" type = "double" value= "500" unless="$(arg real_camera)"/>
+	<param name ="min_y" type = "double" value= "-500" unless="$(arg real_camera)"/>
+	<param name ="max_z" type = "double" value= "1000." unless="$(arg real_camera)"/>
+	<param name ="min_z" type = "double" value= "-500" unless="$(arg real_camera)"/>
+
+	<param name ="voxel_downsample_res" type = "double" value= "0.005"/>
+	<param name ="cluster_tolerance" type = "double" value= "0.005"/>
+	<param name ="downsample_object_cloud" type = "bool" value= "true"/>
+	<param name ="num_normal_neighbors" type = "int" value= "9"/>
+
+	<param name ="filter_bias" type = "double" value= "-0.01" />
+	<param name ="color_sim_min" type = "double" value = ".5" />
+	<param name ="check_table_color" type="bool" value="true"/>
+	<param name ="keep_z_filter_organized" type="bool" value="false"/>
+	<param name ="create_srv" type="bool" value="false"/>
+	<param name ="debug" type="bool" value="true"/>
+
+	<param name ="debug_srv_output" type="bool" value="true"/>
+	<param name ="visualize_bounding_box" type="bool" value="true"/>
+	<param name ="visualize_clusters" type="bool" value="false"/>
+
+	<!-- set to true to always run segmentation instead of only on service calls -->
+	<param name ="segment_on_callback" type="bool" value= "false" />
+
+	<!-- if transform_cloud is set to true, it transforms it into the specified frame prior to processing -->
+	<param name="transform_cloud" value="true" type="bool" />
+	<param name="workspace_frame" value="world" type="string"/>
+  </node>
+</launch>
