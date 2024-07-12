@@ -155,6 +155,7 @@ if __name__ == "__main__":
 
     soft_asset = gym.load_asset(sim, asset_root, soft_asset_file, asset_options)
 
+    two_robot_offset = 1.0
     if args.prim_name == "box": 
         soft_pose.p = gymapi.Vec3(0.0, -two_robot_offset/2, thickness/2 + 0.001)
         soft_pose.r = gymapi.Quat(0.0, 0.0, 0.707107, 0.707107)
@@ -178,7 +179,7 @@ if __name__ == "__main__":
     envs = []
     envs_obj = []
     dvrk_handles = []
-    dvrk_handles_2 = []
+    #dvrk_handles_2 = []
     object_handles = []
     
 
@@ -192,7 +193,7 @@ if __name__ == "__main__":
         dvrk_handle = gym.create_actor(env, dvrk_asset, pose, "dvrk", i, 1, segmentationId=11)
 
         # add dvrk_2
-        dvrk_2_handle = gym.create_actor(env, dvrk_asset, pose_2, "dvrk_2", i, 2, segmentationId=11)        
+        #dvrk_2_handle = gym.create_actor(env, dvrk_asset, pose_2, "dvrk_2", i, 2, segmentationId=11)        
         
         # add deformable object        
         env_obj = env
@@ -203,7 +204,7 @@ if __name__ == "__main__":
         object_handles.append(soft_actor)
 
         dvrk_handles.append(dvrk_handle)
-        dvrk_handles_2.append(dvrk_2_handle)
+        #dvrk_handles_2.append(dvrk_2_handle)
 
 
     # Set up position control mode for the robot
@@ -217,7 +218,7 @@ if __name__ == "__main__":
     print(f"Velocity limits: {vel_limits}")
 
     for env in envs:
-        gym.set_actor_dof_properties(env, dvrk_handles_2[i], dof_props_2)
+        #gym.set_actor_dof_properties(env, dvrk_handles_2[i], dof_props_2)
         gym.set_actor_dof_properties(env, dvrk_handles[i], dof_props_2)
 
     
@@ -233,18 +234,21 @@ if __name__ == "__main__":
     cam_positions = []
     cam_targets = []
     cam_handles = []
-    cam_width = 400 
-    cam_height = 400 
+    cam_width = 300 #400 
+    cam_height = 300 #400 
     cam_props = gymapi.CameraProperties()
     cam_props.width = cam_width
     cam_props.height = cam_height
 
-    cam_positions.append(gymapi.Vec3(-0.0, soft_pose.p.y + 0.001, 0.5))   # put camera on the side of object
-    cam_targets.append(gymapi.Vec3(0.0, soft_pose.p.y, 0.01))
+    # cam_positions.append(gymapi.Vec3(-0.0, soft_pose.p.y + 0.001, 0.5))   # put camera on the side of object
+    # cam_targets.append(gymapi.Vec3(0.0, soft_pose.p.y, 0.01))
+
+    cam_targets.append(gymapi.Vec3(0.0, -0.4, 0.01))
+    cam_positions.append(gymapi.Vec3(0.0, -0.1, 0.05))
 
     for i, env_obj in enumerate(envs_obj):
-        cam_handles.append(gym.create_camera_sensor(env_obj, cam_props))
-        gym.set_camera_location(cam_handles[i], env_obj, cam_positions[0], cam_targets[0])
+            cam_handles.append(gym.create_camera_sensor(env_obj, cam_props))
+            gym.set_camera_location(cam_handles[i], env_obj, cam_positions[0], cam_targets[0])
 
 
     '''
@@ -255,7 +259,7 @@ if __name__ == "__main__":
  
 
     # Initilize robots' joints
-    init_dvrk_joints(gym, envs[0], [dvrk_handles[0], dvrk_handles_2[0]])  
+    init_dvrk_joints(gym, envs[0], [dvrk_handles[0]])  
 
     # Create directories to save the data
     if args.deformernet_data_path is None or args.manipulation_point_data_path is None:
@@ -299,8 +303,8 @@ if __name__ == "__main__":
     camera_args = [gym, sim, envs_obj[0], cam_handles[0], cam_props, 
                     segmentationId_dict, "deformable", None, 0.002, False, "cpu"]    
     robot_1 = Robot(gym, sim, envs[0], dvrk_handles[0])
-    robot_2 = Robot(gym, sim, envs[0], dvrk_handles_2[0])
-    visualization = False
+    #robot_2 = Robot(gym, sim, envs[0], dvrk_handles_2[0])
+    visualization = True
     
 
     while (not close_viewer) and (not all_done): 
@@ -316,7 +320,7 @@ if __name__ == "__main__":
         if state == "home" :   
             frame_count += 1
             gym.set_joint_target_position(envs[0], gym.get_joint_handle(envs[0], "dvrk", "psm_main_insertion_joint"), 0.24)
-            gym.set_joint_target_position(envs[0], gym.get_joint_handle(envs[0], "dvrk_2", "psm_main_insertion_joint"), 0.24)            
+            #gym.set_joint_target_position(envs[0], gym.get_joint_handle(envs[0], "dvrk_2", "psm_main_insertion_joint"), 0.24)            
 
             if visualization:
                 if frame_count == 5:                
@@ -332,7 +336,7 @@ if __name__ == "__main__":
                     # Save robot and object states for reset purpose              
                     gym.refresh_particle_state_tensor(sim)
                     saved_object_state = deepcopy(gymtorch.wrap_tensor(gym.acquire_particle_state_tensor(sim))) 
-                    init_robot_state_2 = deepcopy(gym.get_actor_rigid_body_states(envs[i], dvrk_handles_2[i], gymapi.STATE_ALL))
+                    #init_robot_state_2 = deepcopy(gym.get_actor_rigid_body_states(envs[i], dvrk_handles_2[i], gymapi.STATE_ALL))
                     init_robot_state_1 = deepcopy(gym.get_actor_rigid_body_states(envs[i], dvrk_handles[i], gymapi.STATE_ALL))
                     first_time = False
 
@@ -373,9 +377,9 @@ if __name__ == "__main__":
 
             # Set up MoveToPose behavior to move the robot to the manipulation point
             mtp_behavior_1 = MoveToPose(target_pose_1, robot_1, sim_params.dt, 1)   
-            mtp_behavior_2 = MoveToPose(target_pose_2, robot_2, sim_params.dt, 1)         
+            #mtp_behavior_2 = MoveToPose(target_pose_2, robot_2, sim_params.dt, 1)         
             
-            if mtp_behavior_1.is_complete_failure() or mtp_behavior_2.is_complete_failure():
+            if mtp_behavior_1.is_complete_failure(): #or mtp_behavior_2.is_complete_failure():
                 rospy.logerr('Can not find moveit plan to grasp. Ignore this grasp.\n')  
                 state = "reset"                
             else:
@@ -391,7 +395,7 @@ if __name__ == "__main__":
         ############################################################################
         if state == "move to preshape":         
             action_1 = mtp_behavior_1.get_action()
-            action_2 = mtp_behavior_2.get_action()
+            #action_2 = mtp_behavior_2.get_action()
 
             if action_1 is not None:
                 gym.set_actor_dof_position_targets(robot_1.env_handle, robot_1.robot_handle, action_1.get_joint_position())      
@@ -399,13 +403,13 @@ if __name__ == "__main__":
             else:
                 gym.set_actor_dof_position_targets(robot_1.env_handle, robot_1.robot_handle, prev_action_1.get_joint_position())
 
-            if action_2 is not None:
-                gym.set_actor_dof_position_targets(robot_2.env_handle, robot_2.robot_handle, action_2.get_joint_position())      
-                prev_action_2 = action_2
-            else:
-                gym.set_actor_dof_position_targets(robot_2.env_handle, robot_2.robot_handle, prev_action_2.get_joint_position())
+            #if action_2 is not None:
+            #    gym.set_actor_dof_position_targets(robot_2.env_handle, robot_2.robot_handle, action_2.get_joint_position())      
+            #    prev_action_2 = action_2
+            #else:
+            #    gym.set_actor_dof_position_targets(robot_2.env_handle, robot_2.robot_handle, prev_action_2.get_joint_position())
 
-            if mtp_behavior_1.is_complete() and mtp_behavior_2.is_complete():
+            if mtp_behavior_1.is_complete(): # and mtp_behavior_2.is_complete():
                 state = "grasp object"   
                 rospy.loginfo("Succesfully executed PRESHAPE moveit arm plan. Let's fucking grasp it!!") 
 
@@ -416,8 +420,8 @@ if __name__ == "__main__":
         if state == "grasp object":             
             rospy.loginfo("**Current state: " + state)
             # Rapidly close the grippers
-            gym.set_joint_target_position(envs[i], gym.get_joint_handle(envs[i], "dvrk_2", "psm_tool_gripper1_joint"), -2.5)
-            gym.set_joint_target_position(envs[i], gym.get_joint_handle(envs[i], "dvrk_2", "psm_tool_gripper2_joint"), -3.0)         
+            # gym.set_joint_target_position(envs[i], gym.get_joint_handle(envs[i], "dvrk_2", "psm_tool_gripper1_joint"), -2.5)
+            # gym.set_joint_target_position(envs[i], gym.get_joint_handle(envs[i], "dvrk_2", "psm_tool_gripper2_joint"), -3.0)         
 
             gym.set_joint_target_position(envs[i], gym.get_joint_handle(envs[i], "dvrk", "psm_tool_gripper1_joint"), -2.5)
             gym.set_joint_target_position(envs[i], gym.get_joint_handle(envs[i], "dvrk", "psm_tool_gripper2_joint"), -3.0)  
@@ -426,28 +430,28 @@ if __name__ == "__main__":
             g_1_pos = 0.35
             g_2_pos = -0.35
             dof_states_1 = gym.get_actor_dof_states(envs[i], dvrk_handles[i], gymapi.STATE_POS)
-            dof_states_2 = gym.get_actor_dof_states(envs[i], dvrk_handles_2[i], gymapi.STATE_POS)
-            if dof_states_1['pos'][8] < 0.35 and dof_states_2['pos'][8] < 0.35:
+            #dof_states_2 = gym.get_actor_dof_states(envs[i], dvrk_handles_2[i], gymapi.STATE_POS)
+            if dof_states_1['pos'][8] < 0.35: # and dof_states_2['pos'][8] < 0.35:
                                        
                 state = "get shape servo plan"
 
                 gym.set_joint_target_position(envs[i], gym.get_joint_handle(envs[i], "dvrk", "psm_tool_gripper1_joint"), g_1_pos)
                 gym.set_joint_target_position(envs[i], gym.get_joint_handle(envs[i], "dvrk", "psm_tool_gripper2_joint"), g_2_pos)                     
-                gym.set_joint_target_position(envs[i], gym.get_joint_handle(envs[i], "dvrk_2", "psm_tool_gripper1_joint"), g_1_pos)
-                gym.set_joint_target_position(envs[i], gym.get_joint_handle(envs[i], "dvrk_2", "psm_tool_gripper2_joint"), g_2_pos)         
+                # gym.set_joint_target_position(envs[i], gym.get_joint_handle(envs[i], "dvrk_2", "psm_tool_gripper1_joint"), g_1_pos)
+                # gym.set_joint_target_position(envs[i], gym.get_joint_handle(envs[i], "dvrk_2", "psm_tool_gripper2_joint"), g_2_pos)         
         
                 _,init_pose_1 = get_pykdl_client(robot_1.get_arm_joint_positions())
                 init_eulers_1 = transformations.euler_from_matrix(init_pose_1)
 
-                _,init_pose_2 = get_pykdl_client(robot_2.get_arm_joint_positions())
-                init_eulers_2 = transformations.euler_from_matrix(init_pose_2)               
+                # _,init_pose_2 = get_pykdl_client(robot_2.get_arm_joint_positions())
+                # init_eulers_2 = transformations.euler_from_matrix(init_pose_2)               
                 
                 # Switch to velocity control mode for using Resolved Rate Controller
                 dof_props_2['driveMode'][:8].fill(gymapi.DOF_MODE_VEL)
                 dof_props_2["stiffness"][:8].fill(0.0)
                 dof_props_2["damping"][:8].fill(200.0)
                 gym.set_actor_dof_properties(robot_1.env_handle, robot_1.robot_handle, dof_props_2)
-                gym.set_actor_dof_properties(robot_2.env_handle, robot_2.robot_handle, dof_props_2)
+                # gym.set_actor_dof_properties(robot_2.env_handle, robot_2.robot_handle, dof_props_2)
 
 
         ############################################################################
@@ -498,16 +502,16 @@ if __name__ == "__main__":
             beta_1 = delta_beta_1 + init_eulers_1[1]
             gamma_1 = delta_gamma_1 + init_eulers_1[2]
 
-            x_2 = delta_x_2 + init_pose_2[0,3]
-            y_2 = delta_y_2 + init_pose_2[1,3]
-            z_2 = delta_z_2 + init_pose_2[2,3]
-            alpha_2 = delta_alpha_2 + init_eulers_2[0]
-            beta_2 = delta_beta_2 + init_eulers_2[1]
-            gamma_2 = delta_gamma_2 + init_eulers_2[2]
+            # x_2 = delta_x_2 + init_pose_2[0,3]
+            # y_2 = delta_y_2 + init_pose_2[1,3]
+            # z_2 = delta_z_2 + init_pose_2[2,3]
+            # alpha_2 = delta_alpha_2 + init_eulers_2[0]
+            # beta_2 = delta_beta_2 + init_eulers_2[1]
+            # gamma_2 = delta_gamma_2 + init_eulers_2[2]
 
             # Set up Resolved Rate Controller to move the robot to the new pose
             tvc_behavior_1 = ResolvedRateControl([x_1,y_1,z_1,alpha_1,beta_1,gamma_1], robot_1, sim_params.dt, 3, vel_limits=vel_limits)
-            tvc_behavior_2 = ResolvedRateControl([x_2,y_2,z_2,alpha_2,beta_2,gamma_2], robot_2, sim_params.dt, 3, vel_limits=vel_limits)
+            # tvc_behavior_2 = ResolvedRateControl([x_2,y_2,z_2,alpha_2,beta_2,gamma_2], robot_2, sim_params.dt, 3, vel_limits=vel_limits)
             closed_loop_start_time = deepcopy(gym.get_sim_time(sim))
             
             state = "move to goal"
@@ -519,8 +523,8 @@ if __name__ == "__main__":
         if state == "move to goal":
             # Detect if the robot joints exceed the joint limits. If yes, reset the simulation.
             main_ins_pos_1 = gym.get_joint_position(envs[0], gym.get_joint_handle(envs[0], "dvrk", "psm_main_insertion_joint"))
-            main_ins_pos_2 = gym.get_joint_position(envs[0], gym.get_joint_handle(envs[0], "dvrk_2", "psm_main_insertion_joint"))
-            if main_ins_pos_1 <= 0.042 or main_ins_pos_2 <= 0.042:
+            # main_ins_pos_2 = gym.get_joint_position(envs[0], gym.get_joint_handle(envs[0], "dvrk_2", "psm_main_insertion_joint"))
+            if main_ins_pos_1 <= 0.042: # or main_ins_pos_2 <= 0.042:
                 rospy.logerr("Robot exceeded joint constraints !!!")
                 state = "reset"
 
@@ -535,7 +539,7 @@ if __name__ == "__main__":
 
             # Detect if the robot lost contact with the object. If yes, reset the simulation.
             contacts = [contact[4] for contact in gym.get_soft_contacts(sim)]
-            if (not(20 in contacts or 21 in contacts) or not(9 in contacts or 10 in contacts)):  # lose contact w either robot 2 or robot 1    
+            if not(9 in contacts or 10 in contacts):  # lose contact w either (ignore robot 2) or robot 1    
                 rospy.logerr("Robot lost contact with object !!!")               
                 state = "reset"
 
@@ -545,11 +549,11 @@ if __name__ == "__main__":
                     full_pc_on_trajectory.append(get_object_particle_state(gym, sim) + shift)
                     pc_on_trajectory.append(get_partial_pointcloud_vectorized(*camera_args) + shift)
                     curr_trans_on_trajectory_1.append(get_pykdl_client(robot_1.get_arm_joint_positions())[1])
-                    curr_trans_on_trajectory_2.append(get_pykdl_client(robot_2.get_arm_joint_positions())[1])
+                    #curr_trans_on_trajectory_2.append(get_pykdl_client(robot_2.get_arm_joint_positions())[1])
                               
                     if frame_count == 0:
                         mp_mani_point_1 = deepcopy(gym.get_actor_rigid_body_states(robot_1.env_handle, robot_1.robot_handle, gymapi.STATE_POS)[-3])
-                        mp_mani_point_2 = deepcopy(gym.get_actor_rigid_body_states(robot_2.env_handle, robot_2.robot_handle, gymapi.STATE_POS)[-3])
+                        #mp_mani_point_2 = deepcopy(gym.get_actor_rigid_body_states(robot_2.env_handle, robot_2.robot_handle, gymapi.STATE_POS)[-3])
 
                     terminate_count += 1
                     if terminate_count >= 10:
@@ -560,10 +564,10 @@ if __name__ == "__main__":
                 
                 # Set robot joint velocity targets, based on the Resolved Rate Controller
                 action_1 = tvc_behavior_1.get_action()  
-                action_2 = tvc_behavior_2.get_action() 
-                if (action_1 is not None) and (action_2 is not None) and gym.get_sim_time(sim) - closed_loop_start_time <= 1.5: 
+                #action_2 = tvc_behavior_2.get_action() 
+                if (action_1 is not None) and gym.get_sim_time(sim) - closed_loop_start_time <= 1.5: 
                     gym.set_actor_dof_velocity_targets(robot_1.env_handle, robot_1.robot_handle, action_1.get_joint_position())
-                    gym.set_actor_dof_velocity_targets(robot_2.env_handle, robot_2.robot_handle, action_2.get_joint_position())
+                    #gym.set_actor_dof_velocity_targets(robot_2.env_handle, robot_2.robot_handle, action_2.get_joint_position())
 
                 else:   
                     if visualization:
@@ -577,26 +581,30 @@ if __name__ == "__main__":
                     pc_goal = get_partial_pointcloud_vectorized(*camera_args) + shift 
                     full_pc_goal = get_object_particle_state(gym, sim) + shift
                     _, final_trans_1 = get_pykdl_client(robot_1.get_arm_joint_positions())
-                    _, final_trans_2 = get_pykdl_client(robot_2.get_arm_joint_positions())
+                    #_, final_trans_2 = get_pykdl_client(robot_2.get_arm_joint_positions())
                     
                     # Save the data using pickle
-                    for j, (curr_trans_1, curr_trans_2) in enumerate(zip(curr_trans_on_trajectory_1, curr_trans_on_trajectory_2)):                   
+                    for j, curr_trans_1 in enumerate(curr_trans_on_trajectory_1):                   
                         p_1, R_1, twist_1 = tvc_behavior_1.get_transform(curr_trans_1, final_trans_1, get_twist=True)
                         mani_point_1 = curr_trans_1
 
-                        p_2, R_2, twist_2 = tvc_behavior_2.get_transform(curr_trans_2, final_trans_2, get_twist=True)
-                        mani_point_2 = curr_trans_2
+                        # p_2, R_2, twist_2 = tvc_behavior_2.get_transform(curr_trans_2, final_trans_2, get_twist=True)
+                        # mani_point_2 = curr_trans_2
 
                         partial_pcs = (pc_on_trajectory[j], pc_goal)
                         full_pcs = (full_pc_on_trajectory[j], full_pc_goal)
 
-                        mani_point = np.array([mani_point_1[0,3], mani_point_1[1,3]- two_robot_offset, mani_point_1[2,3] + ROBOT_Z_OFFSET,
-                                               -mani_point_2[0,3], -mani_point_2[1,3], mani_point_2[2,3] + ROBOT_Z_OFFSET]) \
-                                    + np.concatenate((shift, shift))
+                        mani_point = np.array([mani_point_1[0,3], mani_point_1[1,3]- two_robot_offset, mani_point_1[2,3] + ROBOT_Z_OFFSET]) \
+                                    + shift
+
+                        # data = {"full pcs": full_pcs, "partial pcs": partial_pcs, 
+                        #         "pos": (p_1, p_2), "rot": (R_1, R_2), "twist": (twist_1, twist_2), \
+                        #         "mani_point": mani_point, "obj_name": args.obj_name}
 
                         data = {"full pcs": full_pcs, "partial pcs": partial_pcs, 
-                                "pos": (p_1, p_2), "rot": (R_1, R_2), "twist": (twist_1, twist_2), \
+                                "pos": (p_1), "rot": (R_1), "twist": (twist_1), \
                                 "mani_point": mani_point, "obj_name": args.obj_name}
+
 
                         if args.save_data:
                             write_pickle_data(data, os.path.join(deformernet_data_path, "sample " + str(data_point_count) + ".pickle"))                      
@@ -609,7 +617,7 @@ if __name__ == "__main__":
                             partial_pcs = (pc_init, pc_on_trajectory[j])
                             full_pcs = (full_pc_init, full_pc_on_trajectory[j])
 
-                            mani_point = np.array(list(mp_mani_point_1["pose"][0]) + list(mp_mani_point_2["pose"][0])) + np.concatenate((shift, shift))
+                            mani_point = np.array(list(mp_mani_point_1["pose"][0])) + shift
                             data = {"full pcs": full_pcs, "partial pcs": partial_pcs, 
                                     "mani_point": mani_point, "obj_name": args.obj_name}
                             
@@ -640,15 +648,15 @@ if __name__ == "__main__":
             dof_props_2["stiffness"][:8].fill(200.0)
             dof_props_2["damping"][:8].fill(40.0)            
             gym.set_actor_dof_properties(robot_1.env_handle, robot_1.robot_handle, dof_props_2) 
-            gym.set_actor_dof_properties(robot_2.env_handle, robot_2.robot_handle, dof_props_2)  
+            #gym.set_actor_dof_properties(robot_2.env_handle, robot_2.robot_handle, dof_props_2)  
 
             # Reset the robot to the initial state
             gym.set_actor_rigid_body_states(envs[i], dvrk_handles[i], init_robot_state_1, gymapi.STATE_ALL)     # position
-            gym.set_actor_rigid_body_states(envs[i], dvrk_handles_2[i], init_robot_state_2, gymapi.STATE_ALL)   
+            #gym.set_actor_rigid_body_states(envs[i], dvrk_handles_2[i], init_robot_state_2, gymapi.STATE_ALL)   
             gym.set_actor_dof_velocity_targets(robot_1.env_handle, robot_1.robot_handle, [0]*8) # zero velocity
-            gym.set_actor_dof_velocity_targets(robot_2.env_handle, robot_2.robot_handle, [0]*8)
+            #gym.set_actor_dof_velocity_targets(robot_2.env_handle, robot_2.robot_handle, [0]*8)
             gym.set_actor_dof_position_targets(robot_1.env_handle, robot_1.robot_handle, [0,0,0,0,0.24,0,0,0,1.5,0.8]) 
-            gym.set_actor_dof_position_targets(robot_2.env_handle, robot_2.robot_handle, [0,0,0,0,0.24,0,0,0,1.5,0.8])             
+            #gym.set_actor_dof_position_targets(robot_2.env_handle, robot_2.robot_handle, [0,0,0,0,0.24,0,0,0,1.5,0.8])             
 
             # Reset the object to the initial state
             gym.set_particle_state_tensor(sim, gymtorch.unwrap_tensor(saved_object_state))

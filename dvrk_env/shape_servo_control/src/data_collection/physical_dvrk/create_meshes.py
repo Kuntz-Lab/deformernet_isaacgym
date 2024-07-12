@@ -24,7 +24,7 @@ def create_cylinder_mesh_datatset(save_mesh_dir, num_mesh=100, save_pickle=True,
         shape_name = "cylinder"        
         object_name = shape_name + "_" + str(i)
         mesh.export(os.path.join(save_mesh_dir, object_name+'.stl'))
-        create_tet(save_mesh_dir, object_name)
+        create_tet_mesh(save_mesh_dir, object_name)
         
         primitive_dict[object_name] = {'radius': radius, 'height': height, 'youngs': youngs}
         primitive_dict['count'] += 1
@@ -109,7 +109,7 @@ def create_hemis_mesh_datatset(save_mesh_dir, num_mesh=100, save_pickle=True, se
         shape_name = "hemis"        
         object_name = shape_name + "_" + str(i)
         mesh.export(os.path.join(save_mesh_dir, object_name+'.stl'))
-        create_tet(save_mesh_dir, object_name)
+        create_tet_mesh(save_mesh_dir, object_name)
 
         primitive_dict[object_name] = {'radius': radius, 'origin': origin, 'youngs': youngs}
         primitive_dict['count'] += 1
