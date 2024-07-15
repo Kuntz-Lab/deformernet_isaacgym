@@ -28,7 +28,7 @@ from utils.grasp_utils import GraspClient
 from utils.isaac_utils import fix_object_frame, get_pykdl_client, init_dvrk_joints
 from utils.miscellaneous_utils import get_object_particle_state, write_pickle_data, print_color, read_pickle_data
 from utils.camera_utils import get_partial_pointcloud_vectorized, visualize_camera_views
-from utils.point_cloud_utils import down_sampling, pcd_ize, visualize_open3d_objects
+from utils.point_cloud_utils import down_sampling, pcd_ize
 
 from goal_plane import get_goal_plane
 
@@ -292,7 +292,7 @@ if __name__ == "__main__":
     poses_on_trajectory = []
     first_time = True
     save_intial_pc = True
-    first_goal_pc = True
+    get_goal_pc = True
     state = "home"
     
     
@@ -333,17 +333,14 @@ if __name__ == "__main__":
     close_viewer = False
     all_done = False
 
-    robot_1 = Robot(gym, sim, envs[0], dvrk_handles_2[0])
+    robot = Robot(gym, sim, envs[0], dvrk_handles_2[0])
     segmentationId_dict = {"robot_2": 11}
     camera_args = [gym, sim, envs_obj[0], cam_handles[0], cam_props, 
                     segmentationId_dict, "deformable", None, 0.002, False, "cpu"]      
 
     constrain_plane = np.array([1, 1, 0, 0.45])  # 2
-    delta = 0
-    plane_points = visualize_plane(constrain_plane, num_pts=50000)
-    pcd_plane = pcd_ize(plane_points, color=[0,1,0])
-    visualization = True
-    
+    shift_plane = constrain_plane.copy()
+    shift_plane[3] += 0.03 
 
     while (not close_viewer) and (not all_done): 
 
@@ -354,6 +351,42 @@ if __name__ == "__main__":
         gym.simulate(sim)
         gym.fetch_results(sim, True)
         t = gym.get_sim_time(sim)
+
+
+        # if prepare_vis_cam:
+        #     plane_points = visualize_plane(constrain_plane, num_pts=50000)
+        #     plane_xs, plane_ys = get_goal_projected_on_image(plane_points, i, thickness = 0)
+        #     valid_ind = []
+        #     for t in range(len(plane_xs)):
+        #         if 0 < plane_xs[t] < vis_cam_width and 0 < plane_ys[t] < vis_cam_height:
+        #             valid_ind.append(t)
+        #     plane_xs = np.array(plane_xs)[valid_ind]
+        #     plane_ys = np.array(plane_ys)[valid_ind]
+            
+
+
+        #     prepare_vis_cam = False
+
+        # if start_vis_cam: 
+        #     if vis_frame_count % 20 == 0:
+        #         gym.render_all_camera_sensors(sim)
+        #         im = gym.get_camera_image(sim, envs_obj[i], vis_cam_handles[0], gymapi.IMAGE_COLOR).reshape((vis_cam_height,vis_cam_width,4))
+        #         # goal_xs, goal_ys = get_goal_projected_on_image(data["full pcs"][1], i, thickness = 1)
+                
+        #         im[plane_xs, plane_ys, :] = [0,0,255,255]
+             
+
+
+        #         im = Image.fromarray(im)
+                
+        #         img_path =  os.path.join(save_path, "image" + f'{num_image:03}' + ".png")
+                
+        #         im.save(img_path)
+        #         num_image += 1         
+            
+   
+
+        #     vis_frame_count += 1
 
 
         if state == "home" :   
@@ -396,7 +429,7 @@ if __name__ == "__main__":
                             0, 0.707107, 0.707107, 0]
 
 
-            mtp_behavior = MoveToPose(target_pose, robot_1, sim_params.dt, 2)
+            mtp_behavior = MoveToPose(target_pose, robot, sim_params.dt, 2)
             if mtp_behavior.is_complete_failure():
                 rospy.logerr('Can not find moveit plan to grasp. Ignore this grasp.\n')  
                 state = "reset"                
@@ -410,7 +443,7 @@ if __name__ == "__main__":
             action = mtp_behavior.get_action()
 
             if action is not None:
-                gym.set_actor_dof_position_targets(robot_1.env_handle, robot_1.robot_handle, action.get_joint_position())      
+                gym.set_actor_dof_position_targets(robot.env_handle, robot.robot_handle, action.get_joint_position())      
                         
             if mtp_behavior.is_complete():
                 state = "grasp object"   
@@ -433,16 +466,9 @@ if __name__ == "__main__":
                 gym.set_joint_target_position(envs[i], gym.get_joint_handle(envs[i], "dvrk_2", "psm_tool_gripper2_joint"), g_2_pos)         
         
                 anchor_pose = deepcopy(gym.get_actor_rigid_body_states(envs[i], dvrk_handles_2[i], gymapi.STATE_POS)[-3])
-                # start_vis_cam = True
+                start_vis_cam = True
 
-                _,init_pose_1 = get_pykdl_client(robot_1.get_arm_joint_positions())
-                init_eulers_1 = transformations.euler_from_matrix(init_pose_1)
-                
-                # Switch to velocity control mode for using Resolved Rate Controller
-                dof_props_2['driveMode'][:8].fill(gymapi.DOF_MODE_VEL)
-                dof_props_2["stiffness"][:8].fill(0.0)
-                dof_props_2["damping"][:8].fill(200.0)
-                gym.set_actor_dof_properties(robot_1.env_handle, robot_1.robot_handle, dof_props_2) 
+
 
 
         if state == "get shape servo plan":
@@ -452,110 +478,131 @@ if __name__ == "__main__":
             print("***Current x, y, z: ", current_pose["pose"]["p"]["x"], current_pose["pose"]["p"]["y"], current_pose["pose"]["p"]["z"] ) 
 
             current_pc = get_object_particle_state(gym, sim)
-            # current_pc = get_partial_pointcloud_vectorized(*camera_args)
             pcd = pcd_ize(current_pc, color=[0,0,0]) 
             
             num_points = current_pc.shape[0]         
             if save_intial_pc:
                 initial_pc = deepcopy(current_pc)
+                # intial_pc_tensor = torch.from_numpy(np.swapaxes(intial_pc,0,1)).float() 
                 save_initial_pc = False
             
-            if first_goal_pc:
-                
+            if get_goal_pc:
+                delta = 0.00
                 goal_pc_numpy = get_goal_plane(constrain_plane=constrain_plane, initial_pc=initial_pc)   
                 pcd_goal = pcd_ize(goal_pc_numpy, color=[1,0,0])                      
                 goal_pc = torch.from_numpy(np.swapaxes(goal_pc_numpy,0,1)).float() 
-                first_goal_pc = False
+                # pcd_goal = open3d.geometry.PointCloud()
+                # pcd_goal.points = open3d.utility.Vector3dVector(goal_pc_numpy) 
+                get_goal_pc = False
 
             current_pc = torch.from_numpy(np.swapaxes(current_pc,0,1)).float()     
-            visualize_open3d_objects([pcd, pcd_plane, pcd_goal])
+            open3d.visualization.draw_geometries([pcd, pcd_goal])   
 
             with torch.no_grad():
                 desired_position = model(current_pc.unsqueeze(0), goal_pc.unsqueeze(0))[0].detach().numpy()*(0.001)  
+                # desired_position = model(intial_pc_tensor.unsqueeze(0), goal_pc.unsqueeze(0))[0].detach().numpy()*(0.001) 
 
-            print_color(f"action output from DeformerNet: {desired_position}")
+            print("from model:", desired_position)
           
-            # Add delta action to the current pose to get the new pose
-            x_1 = desired_position[0] + init_pose_1[0,3]
-            y_1 = desired_position[1] + init_pose_1[1,3]
-            z_1 = desired_position[2] + init_pose_1[2,3]
-            alpha_1 = 1e-6 + init_eulers_1[0]
-            beta_1 = 1e-6 + init_eulers_1[1]
-            gamma_1 = 1e-6 + init_eulers_1[2]
+            delta_x = desired_position[0]   
+            delta_y = desired_position[1] 
+            delta_z = desired_position[2] 
 
-            # Set up Resolved Rate Controller to move the robot to the new pose
-            tvc_behavior_1 = ResolvedRateControl([x_1,y_1,z_1,alpha_1,beta_1,gamma_1], robot_1, sim_params.dt, 3, vel_limits=vel_limits)
-            closed_loop_start_time = deepcopy(gym.get_sim_time(sim))
-            
+          
+
+            cartesian_pose = Pose()
+            cartesian_pose.orientation.x = 0
+            cartesian_pose.orientation.y = 0.707107
+            cartesian_pose.orientation.z = 0.707107
+            cartesian_pose.orientation.w = 0
+            cartesian_pose.position.x = -current_pose["pose"]["p"]["x"] + delta_x
+            cartesian_pose.position.y = -current_pose["pose"]["p"]["y"] + delta_y
+            # cartesian_pose.position.z = current_pose["pose"]["p"]["z"] - ROBOT_Z_OFFSET + delta_z
+            cartesian_pose.position.z = max(0.005- ROBOT_Z_OFFSET,current_pose["pose"]["p"]["z"] - ROBOT_Z_OFFSET + delta_z)
+            dof_states = gym.get_actor_dof_states(envs[0], dvrk_handles_2[0], gymapi.STATE_POS)['pos']
+
+            plan_traj = dc_client.arm_moveit_planner_client(go_home=False, cartesian_goal=cartesian_pose, current_position=dof_states)
             state = "move to goal"
+            traj_index = 0
 
-        if state == "move to goal":                    
-            if frame_count % 10 == 0:
-                current_pc = get_object_particle_state(gym, sim)
-                num_points = current_pc.shape[0]                    
-                num_failed_points = len([p for p in current_pc if constrain_plane[0]*p[0] + constrain_plane[1]*p[1] + constrain_plane[2]*p[2] > -constrain_plane[3]]) 
-                rospy.logwarn(f"percentage passed: {1-float(num_failed_points)/float(num_points)}")
-                print("num success points, num failed points:", num_points, num_failed_points)
+        if state == "move to goal":           
+            # Does plan exist?
+            if (not plan_traj):
+                rospy.logerr('Can not find moveit plan to grasp. Ignore this grasp.\n')  
+                state = "get shape servo plan"
+            else:            
+                if frame_count % 10 == 0:
+                    current_pc = get_object_particle_state(gym, sim)
+                    num_points = current_pc.shape[0]                    
+                    num_failed_points = len([p for p in current_pc if constrain_plane[0]*p[0] + constrain_plane[1]*p[1] + constrain_plane[2]*p[2] > -constrain_plane[3]]) 
+                    rospy.logwarn(f"percentage passed: {1-float(num_failed_points)/float(num_points)}")
+                    print("num, num failed:", num_points, num_failed_points)
+                frame_count += 1
+
+                # print(traj_index, len(plan_traj))
+                dof_states = gym.get_actor_dof_states(envs[0], dvrk_handles_2[0], gymapi.STATE_POS)['pos']
+                plan_traj_with_gripper = [plan+[0.15,-0.15] for plan in plan_traj]
+                pos_targets = np.array(plan_traj_with_gripper[traj_index], dtype=np.float32)
+                gym.set_actor_dof_position_targets(envs[0], dvrk_handles_2[0], pos_targets)                
                 
-                if num_failed_points == 0:
-                    print_color("TASK SUCCESSFUL!!!")
-                    all_done = True
-            frame_count += 1
+                if np.allclose(dof_states[:8], pos_targets[:8], rtol=0, atol=0.01):
+                    traj_index += 1 
 
-            action_1 = tvc_behavior_1.get_action()  
-            if (action_1 is not None) and gym.get_sim_time(sim) - closed_loop_start_time <= 1.5: 
-                gym.set_actor_dof_velocity_targets(robot_1.env_handle, robot_1.robot_handle, action_1.get_joint_position())
-
-            else:               
-                state = "get shape servo plan" 
-                execute_count += 1
-                _,init_pose_1 = get_pykdl_client(robot_1.get_arm_joint_positions())
-                init_eulers_1 = transformations.euler_from_matrix(init_pose_1)
-
-                if execute_count >= max_execute_count:
-                    print_color("DeformerNet converged, but task was not succesful. " 
-                                "Goal plane was just shifted")
-                    new_goal = get_goal_plane(constrain_plane=constrain_plane, initial_pc=initial_pc, 
-                                                check=True, delta=delta, 
-                                                current_pc=get_partial_pointcloud_vectorized(*camera_args))
-                    if new_goal is not None:
-                        goal_pc_numpy = new_goal
-                    else:
-                        print_color("TASK FAILED *sad*")
-                        all_done = True
-                    delta += 0.02
-                   
-                    num_new_goal += 1
-                    print("num_new_goal:", num_new_goal)
+        
+                # if traj_index == 10 or traj_index == len(plan_traj):
+                if traj_index == len(plan_traj):
+                    traj_index = 0  
+                    final_pose = deepcopy(gym.get_actor_rigid_body_states(envs[i], dvrk_handles_2[i], gymapi.STATE_POS)[-3])
+                    # print("***Final x, y, z: ", final_pose[" pose"]["p"]["x"], final_pose["pose"]["p"]["y"], final_pose["pose"]["p"]["z"] ) 
+                    delta_x = -(final_pose["pose"]["p"]["x"] - anchor_pose["pose"]["p"]["x"])
+                    delta_y = -(final_pose["pose"]["p"]["y"] - anchor_pose["pose"]["p"]["y"])
+                    delta_z = final_pose["pose"]["p"]["z"] - anchor_pose["pose"]["p"]["z"]
+                    print("delta x, y, z:", delta_x, delta_y, delta_z)
                     
-                    if goal_pc_numpy == 'success':
-                        print_color("TASK SUCCESSFUL!!!")
-                        all_done = True
-                    else:
-                        goal_pc = torch.from_numpy(np.swapaxes(goal_pc_numpy,0,1)).float() 
-                        execute_count = 0
-                        frame_count = 0
-                        state = "get shape servo plan" 
+                    state = "get shape servo plan" 
+                    execute_count += 1
+
+                    if execute_count >= max_execute_count:
+                        rospy.logwarn("Shift goal plane")
+                        new_goal = get_goal_plane(constrain_plane=constrain_plane, initial_pc=initial_pc, 
+                                                  check=True, delta=delta, 
+                                                  current_pc=get_partial_pointcloud_vectorized(*camera_args))
+                        if new_goal is not None:
+                            goal_pc_numpy = new_goal
+                        # goal_pc_numpy = get_goal_plane(constrain_plane=constrain_plane, initial_pc=initial_pc, check=True, delta=delta, current_pc=[])
+                        delta += 0.02
+                        # delta = min(0.06, delta)
+                        # shift_plane[3] = constrain_plane[3] + 0.03 + delta
+                        # prepare_vis_goal_pc = True
+                        # prepare_vis_shift_plane = True
+                        
+                        num_new_goal += 1
+                        print("num_new_goal:", num_new_goal)
+                        if goal_pc_numpy == 'success':
+                            print("=====================SUCCESS================")
+                            state = "get shape servo plan aaxa"
+                        else:
+                            goal_pc = torch.from_numpy(np.swapaxes(goal_pc_numpy,0,1)).float() 
+                            execute_count = 0
+                            frame_count = 0
+                            state = "get shape servo plan" 
                                    
 
         if state == "reset":   
             rospy.loginfo("**Current state: " + state) 
-
-            # Switch back to position control mode to prepare for MoveToPose behavior.
-            dof_props_2['driveMode'][:8].fill(gymapi.DOF_MODE_POS)
-            dof_props_2["stiffness"][:8].fill(200.0)
-            dof_props_2["damping"][:8].fill(40.0)            
-            gym.set_actor_dof_properties(robot_1.env_handle, robot_1.robot_handle, dof_props_2) 
-
             gym.set_particle_state_tensor(sim, gymtorch.unwrap_tensor(saved_object_state))
             pos_targets = np.array([0.,0.,0.,0.,0.05,0.,0.,0.,1.5,0.8], dtype=np.float32)
             gym.set_actor_dof_position_targets(envs[i], dvrk_handles[i], pos_targets)
+            gym.set_actor_dof_position_targets(envs[i], dvrk_handles_2[i], pos_targets)
             dof_states_1 = gym.get_actor_dof_states(envs[0], dvrk_handles[0], gymapi.STATE_POS)['pos']
-
-            print_color("Sucessfully reset robot and object!!!")
-            pc_on_trajectory = []
-            poses_on_trajectory = []
-            state = "home"
+            dof_states_2 = gym.get_actor_dof_states(envs[0], dvrk_handles_2[0], gymapi.STATE_POS)['pos']
+            if np.allclose(dof_states_1, pos_targets, rtol=0, atol=0.1) and np.allclose(dof_states_2, pos_targets, rtol=0, atol=0.1):
+                # print("Scuesfully reset robot")
+                gym.set_particle_state_tensor(sim, gymtorch.unwrap_tensor(saved_object_state))
+                print("Scuesfully reset robot and object")
+                pc_on_trajectory = []
+                poses_on_trajectory = []
+                state = "home"
  
   
 

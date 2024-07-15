@@ -51,41 +51,32 @@ def vecalign(a, b):
             ])
 
 
-def get_goal_plane(constrain_plane, initial_pc, check = False, delta = 0.01, current_pc=[]):
-    # print("constrain_plane: ", constrain_plane)
-    
+def get_goal_plane(constrain_plane, initial_pc, check = False, delta = 0.01, current_pc=None):   
     if check:
-        # success = all([constrain_plane[0]*p[0] + constrain_plane[1]*p[1] + constrain_plane[2]*p[2] > -constrain_plane[3] \
-        #             for p in current_pc])
         failed_points = np.array([p for p in current_pc if constrain_plane[0]*p[0] + constrain_plane[1]*p[1] + constrain_plane[2]*p[2] > -constrain_plane[3]])                   
         if len(failed_points) == 0:
             return 'success'
         else:
-            # failed_points = np.array([p for p in current_pc if constrain_plane[0]*p[0] + constrain_plane[1]*p[1] + constrain_plane[2]*p[2] > -constrain_plane[3]])
-            # print("failed_points:", failed_points)
             pcd2 = open3d.geometry.PointCloud()
             pcd2.points = open3d.utility.Vector3dVector(failed_points)
-            pcd2.paint_uniform_color([1,0,0])
-            # open3d.visualization.draw_geometries([pcd2])             
+            pcd2.paint_uniform_color([1,0,0])          
             constrain_plane = constrain_plane.copy()
             constrain_plane[3] += delta
-
 
     constrain_plane = constrain_plane.copy()
     constrain_plane[3] += 0.03
 
-    # if len(current_pc) != 0:
-    #     initial_pc = current_pc 
     failed_points = np.array([p for p in initial_pc if constrain_plane[0]*p[0] + constrain_plane[1]*p[1] + constrain_plane[2]*p[2] > -constrain_plane[3]])
     passed_points = np.array([p for p in initial_pc if constrain_plane[0]*p[0] + constrain_plane[1]*p[1] + constrain_plane[2]*p[2] <= -constrain_plane[3]])
 
     if len(passed_points) == 0:
+        # If all points are on the wrong side of the plane, return None. The task failed.
         return None
 
     pcd2 = open3d.geometry.PointCloud()
     pcd2.points = open3d.utility.Vector3dVector(failed_points)
     pcd2.paint_uniform_color([1,0,0])
-    # open3d.visualization.draw_geometries([pcd2])
+
 
     # Find rotation point:
     pcd = open3d.geometry.PointCloud()
@@ -110,7 +101,6 @@ def get_goal_plane(constrain_plane, initial_pc, check = False, delta = 0.01, cur
     pcd2.rotate(R = r.T, center = rot_pt.reshape((3,1)))
 
     goal_pcd = pcd + pcd2
-    # open3d.visualization.draw_geometries([goal_pcd])
     return np.asarray(goal_pcd.points)
 
 

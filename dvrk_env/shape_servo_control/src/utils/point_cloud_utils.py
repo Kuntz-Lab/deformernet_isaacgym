@@ -93,6 +93,14 @@ def pcd_ize(pc, color=None, vis=False):
         open3d.visualization.draw_geometries([pcd])
     return pcd
 
+def visualize_open3d_objects(open3d_objects: list) -> None:
+    """
+    Visualize a list of Open3D objects.
+    """
+    if len(open3d_objects) > 0:
+        open3d.visualization.draw_geometries(open3d_objects)
+    
+
 def spherify_point_cloud_open3d(point_cloud, radius=0.002, color=None, vis=False):
     """
     Use Open3D to visualize a point cloud where each point is represented by a sphere.

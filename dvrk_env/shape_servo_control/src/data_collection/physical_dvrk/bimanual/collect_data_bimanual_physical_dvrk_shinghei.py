@@ -32,6 +32,11 @@ from utils.camera_utils import get_partial_pointcloud_vectorized, visualize_came
 ROBOT_Z_OFFSET = 0.25
 two_robot_offset = 1.0
 
+def get_object_particle_state(gym, sim):
+    gym.refresh_particle_state_tensor(sim)
+    particle_state_tensor = deepcopy(gymtorch.wrap_tensor(gym.acquire_particle_state_tensor(sim)))
+    particles = particle_state_tensor.numpy()[:, :3]  
+    return particles.astype(np.float64)
 
 
 if __name__ == "__main__":
@@ -206,6 +211,23 @@ if __name__ == "__main__":
         dvrk_handles.append(dvrk_handle)
         #dvrk_handles_2.append(dvrk_2_handle)
 
+        ############### check global coordinate orientation
+        # pose = gymapi.Transform(gymapi.Vec3(0.0, 0.0, 0.0))
+        # actor1 = gym.create_actor(env_obj, dvrk_asset, pose, "weeee1", i, 0, segmentationId=11)
+        # color = gymapi.Vec3(1,0,0)
+        # gym.set_rigid_body_color(env_obj, actor1, 0, gymapi.MESH_VISUAL_AND_COLLISION, color)
+
+        # pose = gymapi.Transform(gymapi.Vec3(0.0, 1, 0.0))
+        # actor2 = gym.create_actor(env_obj, dvrk_asset, pose, "weeee2", i, 0, segmentationId=11)
+        # color = gymapi.Vec3(0,1,0)
+        # gym.set_rigid_body_color(env_obj, actor2, 0, gymapi.MESH_VISUAL_AND_COLLISION, color)
+
+        # pose = gymapi.Transform(gymapi.Vec3(1, 0, 0.0))
+        # actor3 = gym.create_actor(env_obj, dvrk_asset, pose, "weeee3", i, 0, segmentationId=11)
+        # color = gymapi.Vec3(0,0,1)
+        # gym.set_rigid_body_color(env_obj, actor3, 0, gymapi.MESH_VISUAL_AND_COLLISION, color)
+
+
 
     # Set up position control mode for the robot
     dof_props_2 = gym.get_asset_dof_properties(dvrk_asset)
@@ -243,8 +265,12 @@ if __name__ == "__main__":
     # cam_positions.append(gymapi.Vec3(-0.0, soft_pose.p.y + 0.001, 0.5))   # put camera on the side of object
     # cam_targets.append(gymapi.Vec3(0.0, soft_pose.p.y, 0.01))
 
-    cam_targets.append(gymapi.Vec3(0.0, -0.4, 0.01))
-    cam_positions.append(gymapi.Vec3(0.0, -0.1, 0.05))
+    cam_positions.append(gymapi.Vec3(0.0, soft_pose.p.y - 0.3, 0.05))   # put camera on the side of object
+    cam_targets.append(gymapi.Vec3(0.0, soft_pose.p.y, 0.01))
+    
+
+    # cam_targets.append(gymapi.Vec3(0.0, -0.4, 0.01))
+    # cam_positions.append(gymapi.Vec3(0.0, -0.1, 0.05))
 
     for i, env_obj in enumerate(envs_obj):
             cam_handles.append(gym.create_camera_sensor(env_obj, cam_props))
@@ -362,18 +388,35 @@ if __name__ == "__main__":
         if state == "generate preshape":                   
             rospy.loginfo("**Current state: " + state)
 
-            # Pick a random manipulation point on the surface of the object
-            preshape_response = dc_client.gen_grasp_preshape_client(pc_ros_msg)               
-            cartesian_goal_2 = deepcopy(preshape_response.palm_goal_pose_world[0].pose)           
+            particles = get_object_particle_state(gym, sim)
+
+            # # Pick a random manipulation point on the surface of the object
+            # preshape_response = dc_client.gen_grasp_preshape_client(pc_ros_msg)               
+            # cartesian_goal_2 = deepcopy(preshape_response.palm_goal_pose_world[0].pose)           
                       
-            preshape_response = dc_client.gen_grasp_preshape_client(pc_ros_msg, non_random = True)               
-            cartesian_goal_1 = deepcopy(preshape_response.palm_goal_pose_world[0].pose)        
+            # preshape_response = dc_client.gen_grasp_preshape_client(pc_ros_msg, non_random = True)               
+            # cartesian_goal_1 = deepcopy(preshape_response.palm_goal_pose_world[0].pose)        
             
-            # Transform the manipulation points to the robot's frame
-            target_pose_1 = [cartesian_goal_1.position.x, cartesian_goal_1.position.y + two_robot_offset, cartesian_goal_1.position.z-ROBOT_Z_OFFSET,
-                            0, 0.707107, 0.707107, 0]
-            target_pose_2 = [-cartesian_goal_2.position.x, -cartesian_goal_2.position.y, cartesian_goal_2.position.z-ROBOT_Z_OFFSET,
-                            0, 0.707107, 0.707107, 0]
+            # # Transform the manipulation points to the robot's frame
+            # target_pose_1 = [cartesian_goal_1.position.x, cartesian_goal_1.position.y + two_robot_offset, cartesian_goal_1.position.z-ROBOT_Z_OFFSET,
+            #                 0, 0.707107, 0.707107, 0]
+            # target_pose_2 = [-cartesian_goal_2.position.x, -cartesian_goal_2.position.y, cartesian_goal_2.position.z-ROBOT_Z_OFFSET,
+            #                 0, 0.707107, 0.707107, 0]
+
+            ################ grasp the point that is in the front half of the soft object facing the robot 1
+            mask = particles[:,1]<(soft_pose.p.y)#-two_robot_offset/2
+            particle_idxs = np.arange(len(particles))
+            y_within_mask = particles[:,1][mask]
+            surface_point_idxs = np.argsort(y_within_mask)[:len(mask)//4]
+            idx = np.random.choice(surface_point_idxs)
+
+            x, y, z = particles[mask][idx]
+
+            print("MMMMMMM soft pose y: ", soft_pose.p.y)
+            print(f"MMMMMMM mani_pt: {x}, {y}, {z}")
+
+            target_pose_1 = [x, y+two_robot_offset, z-ROBOT_Z_OFFSET,
+                        0, 0.707107, 0.707107, 0]
 
             # Set up MoveToPose behavior to move the robot to the manipulation point
             mtp_behavior_1 = MoveToPose(target_pose_1, robot_1, sim_params.dt, 1)   
@@ -532,7 +575,7 @@ if __name__ == "__main__":
             rigid_contacts = gym.get_env_rigid_contacts(envs[0])
             if len(list(rigid_contacts)) != 0:
                 for k in range(len(list(rigid_contacts))):
-                    if rigid_contacts[k]['body0'] > -1 and rigid_contacts[k]['body1'] > -1 : # ignore collision with the ground which has a value of -1
+                    if rigid_contacts[k][-'body0'] > -1 and rigid_contacts[k]['body1'] > -1 : # ignore collision with the ground which has a value of -1
                         state = "reset"
                         rospy.logerr("Two robots collided !!!")
                         break
