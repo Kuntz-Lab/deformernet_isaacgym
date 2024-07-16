@@ -36,29 +36,41 @@ def create_cylinder_mesh_datatset(save_mesh_dir, num_mesh=100, save_pickle=True,
         base_name = f"base_{i}"
         mesh_base.export(os.path.join(save_mesh_dir, base_name+'.obj'))
 
-        large_base_thickness = 0.001
-        large_base = trimesh.creation.box((length/2-base_radius, length, large_base_thickness)) 
-        large_base_name = f"large_base_{i}"
-        x = np.random.uniform(low = -2, high = 2)
-        while x <= 1e-3:
-            x = np.random.uniform(low = -2, high = 2)
-        y = np.random.uniform(low = -2, high = 2)
-        origin_x = np.random.uniform(low = 0.005, high = -length/4)
-        large_base = trimesh.intersections.slice_mesh_plane(mesh=large_base, plane_normal=[x,y,0], plane_origin=[origin_x,0,large_base_thickness/2], cap=True)
+        ### when the object is rotated 90 degrees counterclockwise in the simulation
+        # large_base_thickness = 0.001
+        # large_base = trimesh.creation.box((length/2-base_radius, length, large_base_thickness)) 
+        # large_base_name = f"large_base_{i}"
+        # x = np.random.uniform(low = -2, high = 2)
+        # while x <= 1e-3:
+        #     x = np.random.uniform(low = -2, high = 2)
+        # y = np.random.uniform(low = -2, high = 2)
+        # origin_x = np.random.uniform(low = 0.005, high = -length/4)
+        # large_base = trimesh.intersections.slice_mesh_plane(mesh=large_base, plane_normal=[x,y,0], plane_origin=[origin_x,0,large_base_thickness/2], cap=True)
+        # large_base.export(os.path.join(save_mesh_dir, large_base_name+'.obj'))
 
+        #### when the object is not rotated (same as world coordinate frame)
+        large_base_thickness = 0.001
+        large_base = trimesh.creation.box((length, length/2-base_radius, large_base_thickness)) 
+        large_base_name = f"large_base_{i}"
+        y = np.random.uniform(low = 0.1, high = 2)
+        while y <= 1e-3:
+            y = np.random.uniform(low = 0.1, high = 2)
+        x = np.random.uniform(low = -2, high = 2)
+        origin_y = np.random.uniform(low = -height/16, high = 0)
+        large_base = trimesh.intersections.slice_mesh_plane(mesh=large_base, plane_normal=[-x,-y,0], plane_origin=[0,origin_y,large_base_thickness/2], cap=True)
         large_base.export(os.path.join(save_mesh_dir, large_base_name+'.obj'))
 
-        vis=True
-        if vis:
-            import copy
-            coordinate_frame = trimesh.creation.axis()  
-            coordinate_frame.apply_scale(0.2)    
-            copied_mesh_obj = copy.deepcopy(mesh)
-            T = trimesh.transformations.translation_matrix([0., 0, -0.1])
-            copied_mesh_obj.apply_transform(T)
-            meshes = [copied_mesh_obj, mesh_base, large_base]
-            trimesh.Scene(meshes+[coordinate_frame]).show()
-            trimesh.Scene(meshes).show()
+        # vis=True
+        # if vis:
+        #     import copy
+        #     coordinate_frame = trimesh.creation.axis()  
+        #     coordinate_frame.apply_scale(0.2)    
+        #     copied_mesh_obj = copy.deepcopy(mesh)
+        #     T = trimesh.transformations.translation_matrix([0., 0, -0.1])
+        #     copied_mesh_obj.apply_transform(T)
+        #     meshes = [copied_mesh_obj, mesh_base, large_base]
+        #     trimesh.Scene(meshes+[coordinate_frame]).show()
+        #     trimesh.Scene(meshes).show()
         
         primitive_dict[object_name] = {'height': radius*2, 'width': radius*2, 'radius': radius, 'thickness': height, 'youngs': youngs, "base_radius":base_radius, "base_thickness":base_thickness}
         primitive_dict['count'] += 1
@@ -112,30 +124,42 @@ def create_box_mesh_datatset(save_mesh_dir, type, num_mesh=100, save_pickle=True
         mesh_base.export(os.path.join(save_mesh_dir, base_name+'.obj'))
 
 
-        
-        large_base_thickness = 0.001
-        large_base = trimesh.creation.box((width/2-base_radius, height, large_base_thickness)) 
-        large_base_name = f"large_base_{i}"
-        x = np.random.uniform(low = -2, high = 2)
-        while x <= 1e-3:
-            x = np.random.uniform(low = -2, high = 2)
-        y = np.random.uniform(low = -2, high = 2)
-        origin_x = np.random.uniform(low = 0.005, high = -width/4)
-        large_base = trimesh.intersections.slice_mesh_plane(mesh=large_base, plane_normal=[x,y,0], plane_origin=[origin_x,0,large_base_thickness/2], cap=True)
+        ### when the object is rotated 90 degrees counterclockwise in the simulation
+        # large_base_thickness = 0.001
+        # large_base = trimesh.creation.box((width/2-base_radius, height, large_base_thickness)) 
+        # large_base_name = f"large_base_{i}"
+        # x = np.random.uniform(low = -2, high = 2)
+        # while x <= 1e-3:
+        #     x = np.random.uniform(low = -2, high = 2)
+        # y = np.random.uniform(low = -2, high = 2)
+        # origin_x = np.random.uniform(low = 0.005, high = -width/4)
+        # large_base = trimesh.intersections.slice_mesh_plane(mesh=large_base, plane_normal=[x,y,0], plane_origin=[origin_x,0,large_base_thickness/2], cap=True)
+        # large_base.export(os.path.join(save_mesh_dir, large_base_name+'.obj'))
 
+        #### when the object is not rotated (same as world coordinate frame)
+        large_base_thickness = 0.001
+        large_base = trimesh.creation.box(( width, height/2-base_radius, large_base_thickness)) 
+        large_base_name = f"large_base_{i}"
+        y = np.random.uniform(low = 0.1, high = 2)
+        while y <= 1e-3:
+            y = np.random.uniform(low = 0.1, high = 2)
+        x = np.random.uniform(low = -2, high = 2)
+        #print("xy", x, y)
+        origin_y = np.random.uniform(low = -height/16, high = 0)
+        large_base = trimesh.intersections.slice_mesh_plane(mesh=large_base, plane_normal=[-x,-y,0], plane_origin=[0,origin_y,large_base_thickness/2], cap=True)
         large_base.export(os.path.join(save_mesh_dir, large_base_name+'.obj'))
 
-        vis=False
-        if vis:
-            import copy
-            coordinate_frame = trimesh.creation.axis()  
-            coordinate_frame.apply_scale(0.2)    
-            copied_mesh_obj = copy.deepcopy(mesh)
-            T = trimesh.transformations.translation_matrix([0., 0, -0.1])
-            copied_mesh_obj.apply_transform(T)
-            meshes = [copied_mesh_obj, mesh_base, large_base]
-            trimesh.Scene(meshes+[coordinate_frame]).show()
-            trimesh.Scene(meshes).show()
+        # vis=True
+        # if vis:
+        #     import copy
+        #     coordinate_frame = trimesh.creation.axis()  
+        #     coordinate_frame.apply_scale(0.2)    
+        #     copied_mesh_obj = copy.deepcopy(mesh)
+        #     T = trimesh.transformations.translation_matrix([0., 0, -0.1])
+        #     copied_mesh_obj.apply_transform(T)
+        #     meshes = [copied_mesh_obj, mesh_base, large_base]
+        #     trimesh.Scene(meshes+[coordinate_frame]).show()
+        #     trimesh.Scene(meshes).show()
         
         primitive_dict[object_name] = {'height': height, 'width': width, 'thickness': thickness, 'youngs': youngs, "base_radius":base_radius, "base_thickness":base_thickness}
         primitive_dict['count'] += 1

@@ -126,13 +126,13 @@ if __name__ == "__main__":
         urdf_str +=f"""
                 <link name="large_base">
                     <visual>
-                        <origin xyz="{width/4 + width/8-attach_dist} {0} {-(thickness+large_base_thickness)*scale/2+0.001:.5f}"/>              
+                        <origin xyz="{0} {-height/4 -attach_dist} {-(thickness+large_base_thickness)*scale/2+0.001:.5f}"/>              
                         <geometry>
                             <mesh filename="{os.path.join(base_mesh_path, large_base_name+".obj")}" scale="{scale} {scale} {scale}"/>
                         </geometry>
                     </visual>
                     <collision>
-                        <origin xyz="{width/4 + width/8-attach_dist} {0} {-(thickness+large_base_thickness)*scale/2+0.001:.5f}"/>           
+                        <origin xyz="{0} {-height/4 -attach_dist} {-(thickness+large_base_thickness)*scale/2+0.001:.5f}"/>           
                         <geometry>
                             <mesh filename="{os.path.join(base_mesh_path, large_base_name+".obj")}" scale="{scale} {scale} {scale}"/>
                         </geometry>

@@ -100,7 +100,7 @@ if __name__ == "__main__":
         thickness = data[args.obj_name]["thickness"]
     elif args.prim_name == "cylinder":
         r = data[args.obj_name]["radius"]
-        h = data[args.obj_name]["height"]
+        thickness = data[args.obj_name]["thickness"]
     elif args.prim_name == "hemis":
         r = data[args.obj_name]["radius"]
         o = data[args.obj_name]["origin"]
@@ -121,7 +121,9 @@ if __name__ == "__main__":
 
     # Load robot assets
     pose = gymapi.Transform()
-    pose.p = gymapi.Vec3(0.0, -two_robot_offset, ROBOT_Z_OFFSET) 
+    # pose.p = gymapi.Vec3(0.0, -two_robot_offset, ROBOT_Z_OFFSET) 
+    pose.p = gymapi.Vec3(0.0, 0.0, ROBOT_Z_OFFSET) 
+    pose.r = gymapi.Quat(0.0, 0.0, 1.0, 0.0)
  
     pose_2 = gymapi.Transform()
     pose_2.p = gymapi.Vec3(0.0, 0.0, ROBOT_Z_OFFSET)
@@ -165,11 +167,15 @@ if __name__ == "__main__":
 
     two_robot_offset = 1.0
     if args.prim_name == "box": 
-        soft_pose.p = gymapi.Vec3(0.0, -two_robot_offset/2, thickness/2 + data[args.obj_name]["base_thickness"])
-        soft_pose.r = gymapi.Quat(0.0, 0.0, 0.707107, 0.707107)
+        # soft_pose.p = gymapi.Vec3(0.0, -two_robot_offset/2, thickness/2 + data[args.obj_name]["base_thickness"])
+        # soft_pose.r = gymapi.Quat(0.0, 0.0, 0.707107, 0.707107)
+        soft_pose.p = gymapi.Vec3(0.0, -0.4, thickness/2 + data[args.obj_name]["base_thickness"])
+        
     elif args.prim_name == "cylinder": 
-        soft_pose.p = gymapi.Vec3(0, -two_robot_offset/2, r)
-        soft_pose.r = gymapi.Quat(0.7071068, 0, 0, 0.7071068)
+        # soft_pose.p = gymapi.Vec3(0.0, -two_robot_offset/2, thickness/2 + data[args.obj_name]["base_thickness"])
+        # soft_pose.r = gymapi.Quat(0.0, 0.0, 0.707107, 0.707107)
+        soft_pose.p = gymapi.Vec3(0.0, -0.4, thickness/2 + data[args.obj_name]["base_thickness"])
+        
     elif args.prim_name == "hemis":
         soft_pose = gymapi.Transform()
         soft_pose.p = gymapi.Vec3(0, -two_robot_offset/2, -o)
@@ -278,12 +284,12 @@ if __name__ == "__main__":
     # cam_positions.append(gymapi.Vec3(-0.0, soft_pose.p.y + 0.001, 0.5))   # put camera on the side of object
     # cam_targets.append(gymapi.Vec3(0.0, soft_pose.p.y, 0.01))
 
-    cam_positions.append(gymapi.Vec3(0.0, soft_pose.p.y - 0.3, 0.05))   # put camera on the side of object
-    cam_targets.append(gymapi.Vec3(0.0, soft_pose.p.y, 0.01))
+    # cam_positions.append(gymapi.Vec3(0.0, soft_pose.p.y - 0.3, 0.05))   # rotated, for active perception shing hei
+    # cam_targets.append(gymapi.Vec3(0.0, soft_pose.p.y, 0.01))
     
 
-    # cam_targets.append(gymapi.Vec3(0.0, -0.4, 0.01))
-    # cam_positions.append(gymapi.Vec3(0.0, -0.1, 0.05))
+    cam_targets.append(gymapi.Vec3(0.0, -0.4, 0.01))
+    cam_positions.append(gymapi.Vec3(0.0, -0.1, 0.05))
 
     for i, env_obj in enumerate(envs_obj):
             cam_handles.append(gym.create_camera_sensor(env_obj, cam_props))
@@ -417,18 +423,28 @@ if __name__ == "__main__":
             #                 0, 0.707107, 0.707107, 0]
 
             ################ grasp the point that is in the front half of the soft object facing the robot 1
-            mask = particles[:,1]<(np.min(balls_xyz[:,1]))#soft_pose.p.y
+            # mask = particles[:,1]>(soft_pose.p.y)
+            # particle_idxs = np.arange(len(particles))
+            # y_within_mask = particles[:,1][mask]
+            # surface_point_idxs = np.argsort(y_within_mask)[:len(mask)//4]
+            # idx = np.random.choice(surface_point_idxs)
+
+            mask = particles[:,1]>(soft_pose.p.y)
             particle_idxs = np.arange(len(particles))
             y_within_mask = particles[:,1][mask]
-            surface_point_idxs = np.argsort(y_within_mask)[:len(mask)//4]
+            surface_point_idxs = np.argsort(-y_within_mask)[:len(mask)//4]
             idx = np.random.choice(surface_point_idxs)
+
 
             x, y, z = particles[mask][idx]
 
             print("MMMMMMM soft pose y: ", soft_pose.p.y)
             print(f"MMMMMMM mani_pt: {x}, {y}, {z}")
 
-            target_pose_1 = [x, y+two_robot_offset, z-ROBOT_Z_OFFSET,
+            # target_pose_1 = [x, y+two_robot_offset, z-ROBOT_Z_OFFSET,
+            #             0, 0.707107, 0.707107, 0]
+
+            target_pose_1 = [-x, -y, z-ROBOT_Z_OFFSET,
                         0, 0.707107, 0.707107, 0]
 
             # Set up MoveToPose behavior to move the robot to the manipulation point
@@ -551,9 +567,9 @@ if __name__ == "__main__":
 
 
             # Add the random action to the current pose to get the new pose
-            x_1 = delta_x_1 + init_pose_1[0,3]
-            y_1 = delta_y_1 + init_pose_1[1,3]
-            z_1 = delta_z_1 + init_pose_1[2,3]
+            x_1 = delta_x_1/2 + init_pose_1[0,3]
+            y_1 = delta_y_1/2 + init_pose_1[1,3]
+            z_1 = delta_z_1/2 + init_pose_1[2,3]
             alpha_1 = delta_alpha_1 + init_eulers_1[0]
             beta_1 = delta_beta_1 + init_eulers_1[1]
             gamma_1 = delta_gamma_1 + init_eulers_1[2]
