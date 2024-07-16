@@ -11,7 +11,8 @@ import open3d
 import transformations
 from copy import deepcopy
 import timeit
-import pickle
+#import pickle
+import pickle5 as pickle
 import argparse
 
 
@@ -90,7 +91,7 @@ if __name__ == "__main__":
     sim = gym.create_sim(gpu_physics, gpu_render, sim_type, sim_params)
 
     # Get primitive shape dictionary to know the dimension of the object   
-    object_meshes_path = f"/home/baothach/sim_data/Custom/Custom_mesh/physical_dvrk/multi_{object_category}Pa"    
+    object_meshes_path = f"/home/baothach/sim_data/Custom_shinghei/Custom_mesh/physical_dvrk/multi_{object_category}Pa"    
     with open(os.path.join(object_meshes_path, f"primitive_dict_{args.prim_name}.pickle"), 'rb') as handle:
         data = pickle.load(handle)    
     if args.prim_name == "box":
@@ -104,6 +105,7 @@ if __name__ == "__main__":
         r = data[args.obj_name]["radius"]
         o = data[args.obj_name]["origin"]
 
+    
 
     # Add ground plane
     plane_params = gymapi.PlaneParams()
@@ -145,7 +147,8 @@ if __name__ == "__main__":
     print("Loading asset '%s' from '%s'" % (dvrk_asset_file, asset_root))
     dvrk_asset = gym.load_asset(sim, asset_root, dvrk_asset_file, asset_options)
 
-    asset_root = f"/home/baothach/sim_data/Custom/Custom_urdf/physical_dvrk/bimanual/multi_{object_category}Pa"
+    # asset_root = f"/home/baothach/sim_data/Custom/Custom_urdf/physical_dvrk/bimanual/multi_{object_category}Pa"
+    asset_root = f"/home/baothach/sim_data/Custom_shinghei/Custom_urdf/physical_dvrk/multi_{object_category}Pa"
     soft_asset_file = args.obj_name + ".urdf"    
 
 
@@ -162,7 +165,7 @@ if __name__ == "__main__":
 
     two_robot_offset = 1.0
     if args.prim_name == "box": 
-        soft_pose.p = gymapi.Vec3(0.0, -two_robot_offset/2, thickness/2 + 0.001)
+        soft_pose.p = gymapi.Vec3(0.0, -two_robot_offset/2, thickness/2 + data[args.obj_name]["base_thickness"])
         soft_pose.r = gymapi.Quat(0.0, 0.0, 0.707107, 0.707107)
     elif args.prim_name == "cylinder": 
         soft_pose.p = gymapi.Vec3(0, -two_robot_offset/2, r)
@@ -170,6 +173,16 @@ if __name__ == "__main__":
     elif args.prim_name == "hemis":
         soft_pose = gymapi.Transform()
         soft_pose.p = gymapi.Vec3(0, -two_robot_offset/2, -o)
+
+    
+    balls_relative_xyzs = data[args.obj_name]['balls_relative_xyzs']
+    balls_xyz = np.copy(balls_relative_xyzs)
+    # since the object is rotated 90 degree counter-clockwise, x -> y, y-> -x
+    balls_xyz[:,0] = -balls_relative_xyzs[:,1]
+    balls_xyz[:,1] = balls_relative_xyzs[:,0]
+    # shift the balls to the correct position
+    balls_xyz[:, 0] += soft_pose.p.x
+    balls_xyz[:, 1] += soft_pose.p.y
 
    
     # set up the env grid
@@ -404,7 +417,7 @@ if __name__ == "__main__":
             #                 0, 0.707107, 0.707107, 0]
 
             ################ grasp the point that is in the front half of the soft object facing the robot 1
-            mask = particles[:,1]<(soft_pose.p.y)#-two_robot_offset/2
+            mask = particles[:,1]<(np.min(balls_xyz[:,1]))#soft_pose.p.y
             particle_idxs = np.arange(len(particles))
             y_within_mask = particles[:,1][mask]
             surface_point_idxs = np.argsort(y_within_mask)[:len(mask)//4]
@@ -573,12 +586,12 @@ if __name__ == "__main__":
 
             # Detect if the robot collided with each other. If yes, reset the simulation.
             rigid_contacts = gym.get_env_rigid_contacts(envs[0])
-            if len(list(rigid_contacts)) != 0:
-                for k in range(len(list(rigid_contacts))):
-                    if rigid_contacts[k][-'body0'] > -1 and rigid_contacts[k]['body1'] > -1 : # ignore collision with the ground which has a value of -1
-                        state = "reset"
-                        rospy.logerr("Two robots collided !!!")
-                        break
+            # if len(list(rigid_contacts)) != 0:
+            #     for k in range(len(list(rigid_contacts))):
+            #         if rigid_contacts[k][-'body0'] > -1 and rigid_contacts[k]['body1'] > -1 : # ignore collision with the ground which has a value of -1
+            #             state = "reset"
+            #             rospy.logerr("Two robots collided !!!")
+            #             break
 
             # Detect if the robot lost contact with the object. If yes, reset the simulation.
             contacts = [contact[4] for contact in gym.get_soft_contacts(sim)]
