@@ -99,6 +99,8 @@ if __name__ == "__main__":
         w = data[args.obj_name]["width"]
         thickness = data[args.obj_name]["thickness"]
     elif args.prim_name == "cylinder":
+        h = data[args.obj_name]["height"]
+        w = data[args.obj_name]["width"]
         r = data[args.obj_name]["radius"]
         thickness = data[args.obj_name]["thickness"]
     elif args.prim_name == "hemis":
@@ -180,8 +182,9 @@ if __name__ == "__main__":
         soft_pose = gymapi.Transform()
         soft_pose.p = gymapi.Vec3(0, -two_robot_offset/2, -o)
 
-    
+    #print("____________", args.obj_name)
     balls_relative_xyzs = data[args.obj_name]['balls_relative_xyzs']
+    
     balls_xyz = np.copy(balls_relative_xyzs)
     # since the object is rotated 90 degree counter-clockwise, x -> y, y-> -x
     balls_xyz[:,0] = -balls_relative_xyzs[:,1]
@@ -288,8 +291,13 @@ if __name__ == "__main__":
     # cam_targets.append(gymapi.Vec3(0.0, soft_pose.p.y, 0.01))
     
 
-    cam_targets.append(gymapi.Vec3(0.0, -0.4, 0.01))
-    cam_positions.append(gymapi.Vec3(0.0, -0.1, 0.05))
+    # cam_targets.append(gymapi.Vec3(0.0, -0.4, 0.01))
+    # cam_positions.append(gymapi.Vec3(0.0, -0.1, 0.05))
+
+    cam_target = gymapi.Vec3(0.0, -0.4, 0.01)
+    cam_position = gymapi.Vec3(0.0, -0.2, 0.1)
+    cam_targets.append(cam_target)
+    cam_positions.append(cam_position)
 
     for i, env_obj in enumerate(envs_obj):
             cam_handles.append(gym.create_camera_sensor(env_obj, cam_props))
@@ -674,7 +682,7 @@ if __name__ == "__main__":
                         #         "mani_point": mani_point, "obj_name": args.obj_name}
 
                         data = {"full pcs": full_pcs, "partial pcs": partial_pcs, 
-                                "pos": (p_1), "rot": (R_1), "twist": (twist_1), \
+                                "pos": p_1, "rot": R_1, "twist": twist_1, \
                                 "mani_point": mani_point, "obj_name": args.obj_name}
 
 

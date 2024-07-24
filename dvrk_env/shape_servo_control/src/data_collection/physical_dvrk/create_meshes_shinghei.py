@@ -175,13 +175,15 @@ def create_box_mesh_datatset(save_mesh_dir, type, num_mesh=100, save_pickle=True
 
 ## 1000-200, 5000-1000, 10000-1000
 
+num_mesh = 100
+
 mesh_dir = "/home/baothach/sim_data/Custom_shinghei/Custom_mesh/physical_dvrk/multi_box_1kPa"
 os.makedirs(mesh_dir, exist_ok=True)
-create_box_mesh_datatset(mesh_dir, type='1k', num_mesh=1, seed=None) # seed=0
+create_box_mesh_datatset(mesh_dir, type='1k', num_mesh=num_mesh, seed=None) # seed=0
 
-mesh_dir = "/home/baothach/sim_data/Custom_shinghei/Custom_mesh/physical_dvrk/multi_cylinders_1kPa"
+mesh_dir = "/home/baothach/sim_data/Custom_shinghei/Custom_mesh/physical_dvrk/multi_cylinder_1kPa"
 os.makedirs(mesh_dir, exist_ok=True)
-create_cylinder_mesh_datatset(mesh_dir,num_mesh=1)
+create_cylinder_mesh_datatset(mesh_dir,num_mesh=num_mesh)
 
 # mesh_dir = "/home/baothach/sim_data/Custom/Custom_mesh/multi_hemis_10kPa"
 # create_hemis_mesh_datatset(mesh_dir)

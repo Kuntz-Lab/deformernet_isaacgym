@@ -470,6 +470,12 @@ if __name__ == "__main__":
             current_pc = torch.from_numpy(np.swapaxes(current_pc,0,1)).float()     
             visualize_open3d_objects([pcd, pcd_plane, pcd_goal])
 
+            visualization = True
+            if visualization:         
+                output_file = f"/home/baothach/Downloads/retraction_view_{frame_count}.png"           
+                visualize_camera_views(gym, sim, envs_obj[0], cam_handles, \
+                                    resolution=[cam_props.height, cam_props.width], output_file=output_file)
+
             with torch.no_grad():
                 desired_position = model(current_pc.unsqueeze(0), goal_pc.unsqueeze(0))[0].detach().numpy()*(0.001)  
 
