@@ -7,5 +7,11 @@ python3 loop_deformernet_physical_dvrk_shinghei.py
 
 cd /home/baothach/deformernet_core
 cd single_deformernet
-python3 process_data_single.py --obj_category {your_category}
+python3 process_data_single.py --obj_category box_1kPa
+python3 process_data_single.py --obj_category cylinder_1kPa
 python3 single_trainer_all_objects.py
+
+cd /home/baothach/deformernet_core/learn_manipulation_points
+python3 process_data_dense_predictor_single.py --obj_category box_1kPa
+python3 process_data_dense_predictor_single.py --obj_category cylinder_1kPa
+python3 single_dense_predictor_trainer.py
