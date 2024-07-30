@@ -16,7 +16,7 @@ def create_cylinder_mesh_datatset(save_mesh_dir, num_mesh=100, save_pickle=True,
         min_dim, max_dim = 0.075, 0.15
 
         radius = np.random.uniform(low = min_dim/2, high = max_dim/2)
-        height = 0.01 #np.random.uniform(low = 0.01, high = 0.02)
+        height = np.random.uniform(low = 0.01, high = 0.015)
         mesh = trimesh.creation.cylinder(radius=radius, height=height)
 
         youngs_mean = 1000 #10000
@@ -88,7 +88,7 @@ def create_box_mesh_datatset(save_mesh_dir, type, num_mesh=100, save_pickle=True
     for i in range(num_mesh):
         print(f"object {i}")
 
-        thickness = 0.01 #np.random.uniform(low = 0.01, high = 0.02)
+        thickness = np.random.uniform(low = 0.01, high = 0.015)
 
         min_dim, max_dim = 0.075, 0.15
 

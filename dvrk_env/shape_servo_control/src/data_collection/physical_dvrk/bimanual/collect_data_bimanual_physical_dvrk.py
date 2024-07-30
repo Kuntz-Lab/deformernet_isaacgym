@@ -599,7 +599,8 @@ if __name__ == "__main__":
                                 "mani_point": mani_point, "obj_name": args.obj_name}
 
                         if args.save_data:
-                            write_pickle_data(data, os.path.join(deformernet_data_path, "sample " + str(data_point_count) + ".pickle"))                      
+                            write_pickle_data(data, os.path.join(deformernet_data_path, "sample " + str(data_point_count) + ".pickle")) 
+                            assert(len(os.listdir(deformernet_data_path)) !=0)                 
                         print("New data_point_count:", data_point_count)
                         data_point_count += 1       
 
@@ -614,7 +615,8 @@ if __name__ == "__main__":
                                     "mani_point": mani_point, "obj_name": args.obj_name}
                             
                             if args.save_data:
-                                write_pickle_data(data, os.path.join(manipulation_point_data_path, "sample " + str(mp_data_point_count) + ".pickle"))                        
+                                write_pickle_data(data, os.path.join(manipulation_point_data_path, "sample " + str(mp_data_point_count) + ".pickle")) 
+                                assert(len(os.listdir(manipulation_point_data_path)) !=0)                        
                             print("New mp_data_point_count:", mp_data_point_count)
                             mp_data_point_count += 1      
 

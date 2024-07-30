@@ -6,7 +6,6 @@ python3 loop_deformernet_physical_dvrk_shinghei.py
 
 
 cd /home/baothach/deformernet_core
-
 cd single_deformernet
 python3 process_data_single.py --obj_category {your_category}
 python3 single_trainer_all_objects.py

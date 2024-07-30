@@ -62,8 +62,10 @@ if __name__ == "__main__":
     args.headless = args.headless == "True"
     args.save_data = args.save_data == "True"
 
+    assert(args.headless)
+
     
-    args.headless = args.headless == "True"
+    #args.headless = args.headless == "True"
     args.obj_name = f"{args.prim_name}_{args.obj_name}"
     object_category = f"{args.prim_name}_{args.stiffness}"
 
@@ -406,7 +408,8 @@ if __name__ == "__main__":
                 frame_count = 0    
 
                 # Shift object to centroid for easy training
-                shift = np.array([0.0, -soft_pose.p.y, camera_args[-3]])     
+                shift = np.array([0.0, -soft_pose.p.y, camera_args[-3]])   
+                shift[:] = 0.0  
 
 
         ############################################################################
@@ -674,7 +677,7 @@ if __name__ == "__main__":
                         partial_pcs = (pc_on_trajectory[j], pc_goal)
                         full_pcs = (full_pc_on_trajectory[j], full_pc_goal)
 
-                        mani_point = np.array([mani_point_1[0,3], mani_point_1[1,3]- two_robot_offset, mani_point_1[2,3] + ROBOT_Z_OFFSET]) \
+                        mani_point = np.array([-mani_point_1[0,3], -mani_point_1[1,3], mani_point_1[2,3] + ROBOT_Z_OFFSET]) \
                                     + shift
 
                         # data = {"full pcs": full_pcs, "partial pcs": partial_pcs, 
@@ -687,7 +690,9 @@ if __name__ == "__main__":
 
 
                         if args.save_data:
-                            write_pickle_data(data, os.path.join(deformernet_data_path, "sample " + str(data_point_count) + ".pickle"))                      
+                            write_pickle_data(data, os.path.join(deformernet_data_path, "sample " + str(data_point_count) + ".pickle"))  
+                            print("##################^^^^^^^^ deformernet data path: ", deformernet_data_path)   
+                            assert(len(os.listdir(deformernet_data_path)) !=0)                  
                         print("New data_point_count:", data_point_count)
                         data_point_count += 1       
 
@@ -702,7 +707,9 @@ if __name__ == "__main__":
                                     "mani_point": mani_point, "obj_name": args.obj_name}
                             
                             if args.save_data:
-                                write_pickle_data(data, os.path.join(manipulation_point_data_path, "sample " + str(mp_data_point_count) + ".pickle"))                        
+                                write_pickle_data(data, os.path.join(manipulation_point_data_path, "sample " + str(mp_data_point_count) + ".pickle")) 
+                                print("##################^^^^^^^^ mani data path: ", manipulation_point_data_path)    
+                                assert(len(os.listdir(manipulation_point_data_path)) !=0)                     
                             print("New mp_data_point_count:", mp_data_point_count)
                             mp_data_point_count += 1      
 
