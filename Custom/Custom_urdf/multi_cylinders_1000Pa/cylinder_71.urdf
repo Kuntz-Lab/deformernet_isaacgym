@@ -1,0 +1,45 @@
+    
+    <robot name="cylinder_71">
+        <link name="cylinder_71">    
+            <fem>
+                <origin rpy="0.0 0.0 0.0" xyz="0 0 0" />
+                <density value="100" />
+                <youngs value="1092"/>
+                <poissons value="0.3" />
+                <damping value="0.0" />
+                <attachDistance value="0.01" />
+                <tetmesh filename="/home/baothach/sim_data/Custom/Custom_mesh/multi_cylinders_official/cylinder_71.tet" />
+                <scale value="0.5"/>
+            </fem>
+        </link>
+
+        <link name="fix_frame">
+            <visual>
+                <origin xyz="0.0 0.0 10.060868558747352"/>
+                <geometry>
+                    <box size="0.15 0.03051287854203411 0.005"/>
+                </geometry>
+            </visual>
+            <collision>
+                <origin xyz="0.0 0.0 0.06086855874735188"/>
+                <geometry>
+                    <box size="0.15 0.03051287854203411 0.005"/>
+                </geometry>
+            </collision>
+            <inertial>
+                <mass value="500000"/>
+                <inertia ixx="0.05" ixy="0.0" ixz="0.0" iyy="0.05" iyz="0.0" izz="0.05"/>
+            </inertial>
+        </link>
+        
+        <joint name = "attach" type = "fixed">
+            <origin xyz = "0.0 0.0 0.0" rpy = "0 0 0"/>
+            <parent link ="cylinder_71"/>
+            <child link = "fix_frame"/>
+        </joint>  
+
+
+
+
+    </robot>
+    

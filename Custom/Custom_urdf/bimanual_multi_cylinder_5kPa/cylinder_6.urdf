@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>      
+    <robot name="cylinder_6">
+        <link name="cylinder_6">    
+            <fem>
+                <origin rpy="0.0 0.0 0.0" xyz="0 0 0" />
+                <density value="100" />
+                <youngs value="4472"/>
+                <poissons value="0.3" />
+                <damping value="0.0" />
+                <attachDistance value="0.01" />
+                <tetmesh filename="/home/baothach/sim_data/Custom/Custom_mesh/multi_cylinder_5kPa/cylinder_6.tet" />
+                <scale value="0.5"/>
+            </fem>
+        </link>
+    </robot>
+    

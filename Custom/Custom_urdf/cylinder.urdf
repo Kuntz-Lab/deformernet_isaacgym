@@ -1,0 +1,17 @@
+
+    <robot name="">
+        <link name="">    
+            <fem>
+                <origin rpy="0.0 0.0 0.0" xyz="0 0 0" />
+                <density value="100" />
+                <youngs value="1000.0"/>
+                <poissons value="0.3" />
+                <damping value="0.0" />
+                <attachDistance value="0.0" />
+                <tetmesh filename="/home/baothach/sim_data/Custom/Custom_mesh/cylinder/simplified_mesh.tet" />
+                <scale value="0.5"/>
+<!--		<scale value="0.7"/>-->
+            </fem>
+        </link>
+    </robot>
+    

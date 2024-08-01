@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>    
+    
+    <robot name="box_3">
+        <link name="box_3">    
+            <fem>
+                <origin rpy="0.0 0.0 0.0" xyz="0 0 0" />
+                <density value="100" />
+                <youngs value="2000"/>
+                <poissons value="0.3"/>
+                <damping value="0.0" />
+                <attachDistance value="0.001"/>
+                <tetmesh filename="/home/baothach/sim_data/Custom/Custom_mesh/retraction_cutting/multi_box/box_3.tet"/>
+                <scale value="0.5"/>
+            </fem>
+        </link>
+
+        <link name="fix_frame">
+            <visual>
+                <origin xyz="0.0 0.0 -0.013"/>              
+                <geometry>
+                    <mesh filename="/home/baothach/sim_data/Custom/Custom_mesh/retraction_cutting/multi_box/base_3.obj" scale="0.5 0.5 0.5"/>
+                </geometry>
+            </visual>
+            <collision>
+                <origin xyz="0.0 0.0 -0.013"/>           
+                <geometry>
+                    <mesh filename="/home/baothach/sim_data/Custom/Custom_mesh/retraction_cutting/multi_box/base_3.obj" scale="0.5 0.5 0.5"/>
+                </geometry>
+            </collision>
+            <inertial>
+                <mass value="500000"/>
+                <inertia ixx="0.05" ixy="0.0" ixz="0.0" iyy="0.05" iyz="0.0" izz="0.05"/>
+            </inertial>
+        </link>
+        
+        <joint name = "attach" type = "fixed">
+            <origin xyz = "0.0 0.0 0.0" rpy = "0 0 0"/>
+            <parent link ="box_3"/>
+            <child link = "fix_frame"/>
+        </joint>  
+
+
+
+
+    </robot>
+    

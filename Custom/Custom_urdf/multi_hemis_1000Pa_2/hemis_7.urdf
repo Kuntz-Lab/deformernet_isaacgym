@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>    
+    <robot name="hemis_7">
+        <link name="hemis_7">    
+            <fem>
+                <origin rpy="0.0 0.0 0.0" xyz="0 0 0" />
+                <density value="100" />
+                <youngs value="829"/>
+                <poissons value="0.3" />
+                <damping value="0.0" />
+                <attachDistance value="0.04" />
+                <tetmesh filename="/home/baothach/sim_data/Custom/Custom_mesh/multi_hemis_1000Pa_2/hemis_7.tet" />
+                <scale value="0.5"/>
+            </fem>
+        </link>
+
+        <link name="fix_frame">
+            <visual>
+                <origin xyz="0 -10.107167664370452 0.053583832185226166"/>              
+                <geometry>
+                    <box size="0.3 0.005 0.053583832185226166"/>
+                </geometry>
+            </visual>
+            <collision>
+                <origin xyz="0 -0.10716766437045233 0.053583832185226166"/>              
+                <geometry>
+                    <box size="0.3 0.005 0.053583832185226166"/>
+                </geometry>
+            </collision>
+            <inertial>
+                <mass value="500000"/>
+                <inertia ixx="0.05" ixy="0.0" ixz="0.0" iyy="0.05" iyz="0.0" izz="0.05"/>
+            </inertial>
+        </link>
+        
+        <joint name = "attach" type = "fixed">
+            <origin xyz = "0.0 0.0 0.0" rpy = "0 0 0"/>
+            <parent link ="hemis_7"/>
+            <child link = "fix_frame"/>
+        </joint>  
+
+
+
+
+    </robot>
+    

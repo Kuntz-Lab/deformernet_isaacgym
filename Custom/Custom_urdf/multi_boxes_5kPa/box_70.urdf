@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>    
+    
+    <robot name="box_70">
+        <link name="box_70">    
+            <fem>
+                <origin rpy="0.0 0.0 0.0" xyz="0 0 0" />
+                <density value="100" />
+                <youngs value="4738"/>
+                <poissons value="0.3" />
+                <damping value="0.0" />
+                <attachDistance value="0.01" />
+                <tetmesh filename="/home/baothach/sim_data/Custom/Custom_mesh/multi_boxes_5kPa/box_70.tet" />
+                <scale value="0.5"/>
+            </fem>
+        </link>
+
+        <link name="fix_frame">
+            <visual>
+                <origin xyz="-10.090883389558782 0.0 0.0"/>              
+                <geometry>
+                    <box size="0.005 0.15 0.02511318982546456"/>
+                </geometry>
+            </visual>
+            <collision>
+                <origin xyz="-0.09088338955878156 0.0 0.0"/>              
+                <geometry>
+                    <box size="0.005 0.15 0.02511318982546456"/>
+                </geometry>
+            </collision>
+            <inertial>
+                <mass value="500000"/>
+                <inertia ixx="0.05" ixy="0.0" ixz="0.0" iyy="0.05" iyz="0.0" izz="0.05"/>
+            </inertial>
+        </link>
+        
+        <joint name = "attach" type = "fixed">
+            <origin xyz = "0.0 0.0 0.0" rpy = "0 0 0"/>
+            <parent link ="box_70"/>
+            <child link = "fix_frame"/>
+        </joint>  
+
+
+
+
+    </robot>
+    
