@@ -25,15 +25,24 @@ def get_random_balls(num_balls, xy_lower_bounds, xy_upper_bounds, min_separation
     return balls_xy
 
 if __name__ == "__main__":
-    mesh_name = "multi_box_1kPa" #multi_cylinders_1kPa
-    shape_name = "box" #cylinder
+    # mesh_name = "multi_box_1kPa" #multi_cylinders_1kPa
+    # shape_name = "box" #cylinder
 
-    mesh_name = "multi_cylinder_1kPa"
-    shape_name = "cylinder" #cylinder
+    # mesh_name = "multi_cylinder_1kPa"
+    # shape_name = "cylinder" #cylinder
 
-    shape_names = ["box", "cylinder"]
-    mesh_names = ["multi_box_1kPa", "multi_cylinder_1kPa"]
+    # shape_names = ["box", "cylinder"]
+    # mesh_names = ["multi_box_1kPa", "multi_cylinder_1kPa"]
+    # assert len(shape_names) == len(mesh_names)
+
+
+    shape_names = ["hemis"]
+    mesh_names = ["multi_hemis_10kPa"]
     assert len(shape_names) == len(mesh_names)
+
+    print("shape_names: ", shape_names)
+    print("mesh_names: ", mesh_names)
+
     num_mesh = 100
 
 
@@ -99,7 +108,7 @@ if __name__ == "__main__":
                         <youngs value="{youngs}"/>
                         <poissons value="{poissons}"/>
                         <damping value="0.0" />
-                        <attachDistance value="{attach_dist}"/>
+                        <attachDistance value="{attach_dist*10}"/>
                         <tetmesh filename="{os.path.join(object_mesh_path, mesh_object_name+".tet")}"/>
                         <scale value="{scale}"/>
                     </fem>
@@ -139,6 +148,7 @@ if __name__ == "__main__":
             large_base_thickness = 0.001
             large_base_name = f"large_base_{i}"
             # add the large base to hold the back-half of the tissue still
+            ### may need to adjust the origin xyz of link name large base by adding 0.001
             urdf_str +=f"""
                     <link name="large_base">
                         <visual>

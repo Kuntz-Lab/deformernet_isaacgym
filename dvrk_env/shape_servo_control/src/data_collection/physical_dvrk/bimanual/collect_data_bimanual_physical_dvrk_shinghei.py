@@ -62,7 +62,7 @@ if __name__ == "__main__":
     args.headless = args.headless == "True"
     args.save_data = args.save_data == "True"
 
-    assert(args.headless)
+    #assert(args.headless)
 
     
     #args.headless = args.headless == "True"
@@ -106,6 +106,10 @@ if __name__ == "__main__":
         r = data[args.obj_name]["radius"]
         thickness = data[args.obj_name]["thickness"]
     elif args.prim_name == "hemis":
+        h = data[args.obj_name]["height"]
+        w = data[args.obj_name]["width"]
+        r = data[args.obj_name]["radius"]
+        thickness = data[args.obj_name]["thickness"]
         r = data[args.obj_name]["radius"]
         o = data[args.obj_name]["origin"]
 
@@ -182,7 +186,8 @@ if __name__ == "__main__":
         
     elif args.prim_name == "hemis":
         soft_pose = gymapi.Transform()
-        soft_pose.p = gymapi.Vec3(0, -two_robot_offset/2, -o)
+        #soft_pose.p = gymapi.Vec3(0, -two_robot_offset/2, -o)
+        soft_pose.p = gymapi.Vec3(0.0, -0.4, thickness/2 + data[args.obj_name]["base_thickness"])
 
     #print("____________", args.obj_name)
     balls_relative_xyzs = data[args.obj_name]['balls_relative_xyzs']
@@ -359,7 +364,7 @@ if __name__ == "__main__":
                     segmentationId_dict, "deformable", None, 0.002, False, "cpu"]    
     robot_1 = Robot(gym, sim, envs[0], dvrk_handles[0])
     #robot_2 = Robot(gym, sim, envs[0], dvrk_handles_2[0])
-    visualization = True
+    visualization = False #True
     
 
     while (not close_viewer) and (not all_done): 
@@ -472,6 +477,7 @@ if __name__ == "__main__":
             pc_init = get_partial_pointcloud_vectorized(*camera_args) + shift
             full_pc_init = get_object_particle_state(gym, sim) + shift
 
+            
 
         ############################################################################
         # move to preshape: Move robot gripper to the manipulation point location
@@ -535,6 +541,10 @@ if __name__ == "__main__":
                 dof_props_2["damping"][:8].fill(200.0)
                 gym.set_actor_dof_properties(robot_1.env_handle, robot_1.robot_handle, dof_props_2)
                 # gym.set_actor_dof_properties(robot_2.env_handle, robot_2.robot_handle, dof_props_2)
+
+                mp_mani_point_1 = deepcopy(gym.get_actor_rigid_body_states(robot_1.env_handle, robot_1.robot_handle, gymapi.STATE_POS)[-3])
+                print("++++ mp_mani_point_1: ", np.array(list(mp_mani_point_1["pose"][0])))
+
 
 
         ############################################################################
@@ -634,9 +644,10 @@ if __name__ == "__main__":
                     curr_trans_on_trajectory_1.append(get_pykdl_client(robot_1.get_arm_joint_positions())[1])
                     #curr_trans_on_trajectory_2.append(get_pykdl_client(robot_2.get_arm_joint_positions())[1])
                               
-                    if frame_count == 0:
-                        mp_mani_point_1 = deepcopy(gym.get_actor_rigid_body_states(robot_1.env_handle, robot_1.robot_handle, gymapi.STATE_POS)[-3])
-                        #mp_mani_point_2 = deepcopy(gym.get_actor_rigid_body_states(robot_2.env_handle, robot_2.robot_handle, gymapi.STATE_POS)[-3])
+                    # if frame_count == 0:
+                    #     mp_mani_point_1 = deepcopy(gym.get_actor_rigid_body_states(robot_1.env_handle, robot_1.robot_handle, gymapi.STATE_POS)[-3])
+                    #     print("++++ mp_mani_point_1: ", np.array(list(mp_mani_point_1["pose"][0])))
+                    #     #mp_mani_point_2 = deepcopy(gym.get_actor_rigid_body_states(robot_2.env_handle, robot_2.robot_handle, gymapi.STATE_POS)[-3])
 
                     terminate_count += 1
                     if terminate_count >= 10:

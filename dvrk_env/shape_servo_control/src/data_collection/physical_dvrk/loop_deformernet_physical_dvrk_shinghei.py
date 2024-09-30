@@ -10,8 +10,10 @@ os.chdir(pkg_path)
 headless = "True"
 start_time = timeit.default_timer()
 
-prim_names = ["box", "cylinder"]
-stiffnesses = ["1k"]  #["1k", "5k", "10k"] 
+# prim_names = ["box", "cylinder"]
+# stiffnesses = ["1k"]  #["1k", "5k", "10k"] 
+prim_names = ["hemis"]
+stiffnesses = ["10k"]  #["1k", "5k", "10k"] 
 num_tissue = 100
 for prim_name in prim_names:
     for stiffness in stiffnesses:

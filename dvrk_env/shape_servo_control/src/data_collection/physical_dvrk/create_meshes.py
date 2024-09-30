@@ -113,6 +113,18 @@ def create_hemis_mesh_datatset(save_mesh_dir, num_mesh=100, save_pickle=True, se
 
         primitive_dict[object_name] = {'radius': radius, 'origin': origin, 'youngs': youngs}
         primitive_dict['count'] += 1
+
+        vis=True
+        if vis:
+            import copy
+            coordinate_frame = trimesh.creation.axis()  
+            #coordinate_frame.apply_scale(0.2)    
+            copied_mesh_obj = copy.deepcopy(mesh)
+            T = trimesh.transformations.translation_matrix([0., 0, -0.1])
+            copied_mesh_obj.apply_transform(T)
+            meshes = [copied_mesh_obj]
+            #trimesh.Scene(meshes+[coordinate_frame]).show()
+            trimesh.Scene(meshes).show()
     
     if save_pickle == False:   
         return primitive_dict
@@ -124,15 +136,15 @@ def create_hemis_mesh_datatset(save_mesh_dir, num_mesh=100, save_pickle=True, se
 
 ## 1000-200, 5000-1000, 10000-1000
 
-mesh_dir = "/home/baothach/sim_data/Custom/Custom_mesh/physical_dvrk/multi_box_1kPa"
-os.makedirs(mesh_dir, exist_ok=True)
-create_box_mesh_datatset(mesh_dir, type='1k', num_mesh=100, seed=None) # seed=0
+# mesh_dir = "/home/baothach/sim_data/Custom/Custom_mesh/physical_dvrk/multi_box_1kPa"
+# os.makedirs(mesh_dir, exist_ok=True)
+# create_box_mesh_datatset(mesh_dir, type='1k', num_mesh=100, seed=None) # seed=0
 
 # mesh_dir = "/home/baothach/sim_data/Custom/Custom_mesh/multi_cylinders_1000Pa"
 # create_cylinder_mesh_datatset(mesh_dir)
 
-# mesh_dir = "/home/baothach/sim_data/Custom/Custom_mesh/multi_hemis_10kPa"
-# create_hemis_mesh_datatset(mesh_dir)
+mesh_dir = "/home/baothach/sim_data/Custom/Custom_mesh/multi_hemis_10kPa"
+create_hemis_mesh_datatset(mesh_dir)
 
 
 
